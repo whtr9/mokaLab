@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MokaLab — Интерактивный гид и калькулятор гейзерной кофеварки</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono для технических данных -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        espresso: {
+                            50: '#fdf8f6',
+                            100: '#f2e8e5',
+                            200: '#eaddd7',
+                            300: '#e0cec7',
+                            400: '#d2bab0',
+                            500: '#bfa094',
+                            600: '#a18072',
+                            700: '#846358',
+                            800: '#43302b',
+                            900: '#271c19',
+                            950: '#160f0d',
+                        },
+                        crema: {
+                            light: '#f5ebe1',
+                            DEFAULT: '#d99b66',
+                            dark: '#b36b34'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Плавные анимации для SVG уровней жидкости */
+        .svg-liquid {
+            transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        /* Кастомные ползунки */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 999px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #d99b66;
+            border: 3px solid #160f0d;
+            margin-top: -6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            background: #e6ac77;
+        }
+        /* Пузырьки при заваривании */
+        @keyframes floatBubble {
+            0% { transform: translateY(0) scale(0.8); opacity: 0.7; }
+            100% { transform: translateY(-28px) scale(1.2); opacity: 0; }
+        }
+        .bubble-1 { animation: floatBubble 2.4s infinite ease-in; }
+        .bubble-2 { animation: floatBubble 3.1s infinite ease-in 0.8s; }
+        .bubble-3 { animation: floatBubble 2.7s infinite ease-in 1.4s; }
+    </style>
+</head>
+<body class="bg-stone-100 dark:bg-espresso-950 text-stone-800 dark:text-stone-100 font-sans min-h-screen transition-colors duration-300 selection:bg-crema selection:text-espresso-950">
+
+    <!-- Уведомление (вместо alert) -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none bg-stone-900 dark:bg-stone-100 text-stone-100 dark:text-stone-900 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 border border-stone-700/50">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 dark:text-emerald-600 shrink-0"></i>
+        <span id="toast-msg" class="text-sm font-medium">Сохранено!</span>
+    </div>
+
+    <!-- Модальное окно Импорта/Экспорта JSON (для GitHub / обмена рецептами) -->
+    <div id="json-modal" class="fixed inset-0 z-50 hidden bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-espresso-900 border border-stone-200 dark:border-stone-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="code-2" class="w-5 h-5 text-crema"></i>
+                    <h3 class="text-lg font-bold">JSON Конфигурация рецепта</h3>
+                </div>
+                <button onclick="closeJsonModal()" class="p-1.5 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-stone-500 dark:text-stone-400 mb-3">
+                Скопируйте этот JSON для сохранения в репозиторий GitHub или вставьте свой конфиг для быстрой загрузки пропорций:
+            </p>
+            <textarea id="json-textarea" rows="8" class="w-full font-mono text-xs p-3 rounded-xl bg-stone-100 dark:bg-espresso-950 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 focus:outline-none focus:border-crema"></textarea>
+            <div class="flex flex-wrap justify-end gap-2 mt-4">
+                <button onclick="copyJsonConfig()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 flex items-center gap-1.5 transition">
+                    <i data-lucide="copy" class="w-4 h-4"></i> Копировать
+                </button>
+                <button onclick="applyJsonConfig()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-crema text-espresso-950 hover:bg-crema-light flex items-center gap-1.5 transition">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Применить JSON
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Шапка сайта -->
+    <header class="sticky top-0 z-30 backdrop-blur-md bg-white/80 dark:bg-espresso-950/80 border-b border-stone-200 dark:border-stone-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-crema to-amber-700 flex items-center justify-center text-espresso-950 shadow-md">
+                    <i data-lucide="flame" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg sm:text-xl tracking-tight">MokaLab</h1>
+                        <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded-full bg-crema/20 text-crema-dark dark:text-crema border border-crema/30 font-semibold">v1.0 Open Source</span>
+                    </div>
+                    <p class="text-xs text-stone-500 dark:text-stone-400">Интерактивная архитектура напитков для гейзерной кофеварки</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Кнопка сохранения своего пресета -->
+                <button onclick="saveCustomPreset()" class="px-3 py-2 rounded-xl text-xs font-medium bg-stone-200/80 dark:bg-stone-800/80 hover:bg-crema/20 dark:hover:bg-crema/20 border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition" title="Сохранить текущие настройки в браузере">
+                    <i data-lucide="bookmark-plus" class="w-4 h-4 text-crema"></i>
+                    <span class="hidden sm:inline">Сохранить рецепт</span>
+                </button>
+                <!-- Кнопка JSON для GitHub -->
+                <button onclick="openJsonModal()" class="px-3 py-2 rounded-xl text-xs font-medium bg-stone-200/80 dark:bg-stone-800/80 hover:bg-stone-300 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition" title="Экспорт / Импорт JSON">
+                    <i data-lucide="git-branch" class="w-4 h-4 text-amber-500"></i>
+                    <span class="hidden sm:inline">JSON / GitHub</span>
+                </button>
+                <!-- Переключатель темы -->
+                <button onclick="toggleTheme()" class="p-2 rounded-xl bg-stone-200/80 dark:bg-stone-800/80 hover:bg-stone-300 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 transition" aria-label="Переключить тему">
+                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block text-amber-400"></i>
+                    <i data-lucide="moon" class="w-4 h-4 block dark:hidden text-stone-700"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контейнер -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        <!-- 1. ПАНЕЛЬ ВЫБОРА НАПИТКА (Рецептуры) -->
+        <section class="bg-white dark:bg-espresso-900/60 border border-stone-200 dark:border-stone-800/90 rounded-2xl p-4 sm:p-5 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="cup-soda" class="w-5 h-5 text-crema"></i>
+                    <h2 class="text-sm sm:text-base font-bold uppercase tracking-wider text-stone-600 dark:text-stone-300">1. Выберите целевой напиток</h2>
+                </div>
+                <span id="drink-subtitle" class="text-xs text-stone-500 dark:text-stone-400 font-medium">
+                    Нажмите на напиток, чтобы загрузить эталонную пропорцию (например, 12.5г на 70мл для базы Эспрессо)
+                </span>
+            </div>
+
+            <!-- Сетка напитков -->
+            <div id="drink-grid" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+                <!-- Заполняется из JS -->
+            </div>
+
+            <!-- Блок сохранённых пользователем рецептов (если есть) -->
+            <div id="saved-presets-bar" class="hidden mt-3 pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-wrap items-center gap-2">
+                <span class="text-xs font-mono text-stone-400 flex items-center gap-1">
+                    <i data-lucide="bookmark" class="w-3.5 h-3.5 text-crema"></i> Мои пресеты:
+                </span>
+                <div id="saved-presets-list" class="flex flex-wrap gap-1.5"></div>
+            </div>
+        </section>
+
+        <!-- 2. ГЛАВНАЯ РАБОЧАЯ ОБЛАСТЬ: СЛЕВА НАСТРОЙКИ, СПРАВА ВИЗУАЛЬНЫЙ РАЗРЕЗ -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            <!-- ЛЕВАЯ КОЛОНКА: Калькулятор Моки, Пропорции и Кофемолка (5 колонок на десктопе) -->
+            <div class="lg:col-span-5 space-y-5">
+
+                <!-- КАРТОЧКА А: Размер Моки и пропорции Вода / Кофе -->
+                <div class="bg-white dark:bg-espresso-900/60 border border-stone-200 dark:border-stone-800/90 rounded-2xl p-5 shadow-sm space-y-5">
+                    <div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="sliders-horizontal" class="w-5 h-5 text-crema"></i>
+                            <h3 class="font-bold text-base">Параметры Моки и Базы</h3>
+                        </div>
+                        <button onclick="resetToDrinkDefault()" class="text-xs text-crema hover:underline flex items-center gap-1">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Сброс к эталону
+                        </button>
+                    </div>
+
+                    <!-- Выбор размера гейзерной кофеварки -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Размер Моки (Чашки)</label>
+                            <span id="moka-max-info" class="text-xs font-mono text-stone-500 dark:text-stone-400">Клапан: 130 мл | Корзина: ~16 г</span>
+                        </div>
+                        <div id="moka-size-buttons" class="grid grid-cols-5 gap-1.5">
+                            <!-- Генерируется через JS: 1, 2, 3, 4, 6 чашек -->
+                        </div>
+                    </div>
+
+                    <!-- Ползунок 1: Дозировка кофе (г) -->
+                    <div class="p-3.5 rounded-xl bg-stone-100/70 dark:bg-espresso-950/60 border border-stone-200/80 dark:border-stone-800/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="coffee-slider" class="text-sm font-semibold flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-700 inline-block"></span>
+                                Кофе в воронку (г)
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <input id="coffee-input" type="number" step="0.5" min="4" max="45"
+                                    class="w-20 text-right font-mono font-bold text-sm px-2 py-1 rounded-lg bg-white dark:bg-espresso-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-crema"
+                                    oninput="handleCoffeeChange(this.value)">
+                                <span class="text-xs font-mono text-stone-400">г</span>
+                            </div>
+                        </div>
+                        <input id="coffee-slider" type="range" step="0.5" min="4" max="35"
+                            class="w-full bg-stone-300 dark:bg-stone-800 rounded-lg"
+                            oninput="handleCoffeeChange(this.value)">
+                        <div class="flex justify-between text-[11px] font-mono text-stone-400">
+                            <span id="basket-fill-status">Заполнение корзины: 78%</span>
+                            <button onclick="setQuickPreset(12.5, 70)" class="text-crema hover:underline">Эталон 12.5г / 70мл</button>
+                        </div>
+                    </div>
+
+                    <!-- Блокировка коэффициента Brew Ratio -->
+                    <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-crema/10 border border-crema/30">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-stone-700 dark:text-stone-200">Коэффициент (Brew Ratio):</span>
+                            <span id="brew-ratio-badge" class="font-mono font-bold text-sm text-crema-dark dark:text-crema">1 : 5.6</span>
+                        </div>
+                        <button id="lock-ratio-btn" onclick="toggleRatioLock()" class="px-2.5 py-1 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 bg-white dark:bg-espresso-900 border border-stone-300 dark:border-stone-700 hover:border-crema transition">
+                            <i id="lock-icon" data-lucide="unlock" class="w-3.5 h-3.5 text-stone-400"></i>
+                            <span id="lock-text">Свободно</span>
+                        </button>
+                    </div>
+
+                    <!-- Ползунок 2: Вода в нижнюю чашу (мл) -->
+                    <div class="p-3.5 rounded-xl bg-stone-100/70 dark:bg-espresso-950/60 border border-stone-200/80 dark:border-stone-800/80 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="water-slider" class="text-sm font-semibold flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                                Вода в нижнюю чашу (мл)
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <input id="water-input" type="number" step="1" min="20" max="400"
+                                    class="w-20 text-right font-mono font-bold text-sm px-2 py-1 rounded-lg bg-white dark:bg-espresso-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-crema"
+                                    oninput="handleWaterChange(this.value)">
+                                <span class="text-xs font-mono text-stone-400">мл</span>
+                            </div>
+                        </div>
+                        <input id="water-slider" type="range" step="1" min="25" max="200"
+                            class="w-full bg-stone-300 dark:bg-stone-800 rounded-lg"
+                            oninput="handleWaterChange(this.value)">
+                        <div class="flex justify-between items-center text-[11px] font-mono">
+                            <span id="water-valve-status" class="text-emerald-600 dark:text-emerald-400">54% от уровня клапана</span>
+                            <span class="text-stone-400" id="valve-limit-label">Макс до клапана: 130 мл</span>
+                        </div>
+                    </div>
+
+                    <!-- Ползунок 3: Доп. ингредиент (Молоко или Горячая вода для выбранного напитка) -->
+                    <div id="modifier-control-box" class="p-3.5 rounded-xl bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/20 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <label for="milk-slider" class="text-sm font-semibold flex items-center gap-1.5">
+                                <span id="modifier-dot" class="w-2.5 h-2.5 rounded-full bg-orange-200 inline-block"></span>
+                                <span id="modifier-label">Молоко для напитка (мл)</span>
+                            </label>
+                            <div class="flex items-center gap-1">
+                                <input id="milk-input" type="number" step="5" min="0" max="350"
+                                    class="w-20 text-right font-mono font-bold text-sm px-2 py-1 rounded-lg bg-white dark:bg-espresso-900 border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-crema"
+                                    oninput="handleModifierChange(this.value)">
+                                <span class="text-xs font-mono text-stone-400">мл</span>
+                            </div>
+                        </div>
+                        <input id="milk-slider" type="range" step="5" min="0" max="300"
+                            class="w-full bg-stone-300 dark:bg-stone-800 rounded-lg"
+                            oninput="handleModifierChange(this.value)">
+                        <div class="flex justify-between text-[11px] font-mono text-stone-500 dark:text-stone-400">
+                            <span id="modifier-ratio-hint">Рекомендация для Флэт Уайт: ~115 мл</span>
+                            <button onclick="autoSyncModifier()" class="text-crema hover:underline">Авто-расчет под выход кофе</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- КАРТОЧКА Б: Настройка помола (Щелчки кофемолки + RDT + Зерно) -->
+                <div class="bg-white dark:bg-espresso-900/60 border border-stone-200 dark:border-stone-800/90 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="cog" class="w-5 h-5 text-crema"></i>
+                            <h3 class="font-bold text-base">Кофемолка и Подготовка</h3>
+                        </div>
+                        <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300">Помол под рецепт</span>
+                    </div>
+
+                    <!-- Выбор модели кофемолки -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="grinder-select" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">Модель кофемолки</label>
+                            <select id="grinder-select" onchange="updateUI()" class="w-full text-xs sm:text-sm font-medium p-2.5 rounded-xl bg-stone-100 dark:bg-espresso-950 border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-crema">
+                                <option value="timemore_c3">Timemore C3 / C3S Pro</option>
+                                <option value="timemore_c2">Timemore Chestnut C2</option>
+                                <option value="1zpresso_q2">1Zpresso Q2 / JX</option>
+                                <option value="comandante">Comandante C40 (MK3/MK4)</option>
+                                <option value="kingrinder_k6">Kingrinder K6</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="blend-select" class="block text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-1.5">Тип зерна / Обжарка</label>
+                            <select id="blend-select" onchange="updateUI()" class="w-full text-xs sm:text-sm font-medium p-2.5 rounded-xl bg-stone-100 dark:bg-espresso-950 border border-stone-300 dark:border-stone-700 focus:outline-none focus:border-crema">
+                                <option value="blend_80_20">Эспрессо-бленд (80/20 Арабика/Робуста)</option>
+                                <option value="arabica_med">100% Арабика (Средняя обжарка)</option>
+                                <option value="arabica_dark">Итальянская темная обжарка</option>
+                                <option value="arabica_light">Светлая обжарка (Фильтр/Омни)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Табло рекомендуемых щелчков -->
+                    <div class="p-4 rounded-xl bg-gradient-to-r from-espresso-900 to-stone-900 text-stone-100 border border-stone-700/80 flex items-center justify-between">
+                        <div>
+                            <div class="text-xs uppercase tracking-wider text-stone-400 font-mono">Рекомендуемый помол</div>
+                            <div id="grinder-clicks-main" class="text-xl sm:text-2xl font-mono font-bold text-crema mt-0.5">
+                                14–16 щелчков
+                            </div>
+                            <div id="grinder-clicks-sub" class="text-xs text-stone-300 mt-0.5">
+                                Оптимум: 15 щелчков (средне-мелкий, текстура мелкого песка)
+                            </div>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-crema/15 border border-crema/30 flex flex-col items-center justify-center shrink-0">
+                            <span id="grinder-optimal-num" class="font-mono font-bold text-lg text-crema leading-none">15</span>
+                            <span class="text-[9px] font-mono uppercase text-stone-400 mt-0.5">кликов</span>
+                        </div>
+                    </div>
+
+                    <!-- RDT & Температура стартовой воды -->
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                        <div class="p-3 rounded-xl bg-stone-100/80 dark:bg-espresso-950/60 border border-stone-200 dark:border-stone-800">
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-sky-600 dark:text-sky-400 mb-1">
+                                <i data-lucide="droplets" class="w-4 h-4"></i> Техника RDT
+                            </div>
+                            <p class="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed">
+                                Добавьте <strong>1 каплю воды</strong> на зерна перед помолом — это полностью уберет статику и комкование.
+                            </p>
+                        </div>
+                        <div class="p-3 rounded-xl bg-stone-100/80 dark:bg-espresso-950/60 border border-stone-200 dark:border-stone-800">
+                            <div class="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 mb-1">
+                                <i data-lucide="thermometer-sun" class="w-4 h-4"></i> Старт воды
+                            </div>
+                            <p id="water-temp-recommendation" class="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed">
+                                Заливайте <strong>горячую воду (75–80°C)</strong> в нижнюю чашу, чтобы не пережечь 20% робусты.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ПРАВАЯ КОЛОНКА: ВИЗУАЛЬНЫЙ РАЗРЕЗ МОКИ И ЧАШКИ + ПОШАГОВЫЙ ПРОТОКОЛ (7 колонок) -->
+            <div class="lg:col-span-7 space-y-5">
+
+                <!-- КАРТОЧКА В: ИНТЕРАКТИВНЫЙ ЧЕРТЕЖ-РАЗРЕЗ (Moka Pot + Cup) -->
+                <div class="bg-white dark:bg-espresso-900/60 border border-stone-200 dark:border-stone-800/90 rounded-2xl p-5 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="font-bold text-base flex items-center gap-2">
+                                <i data-lucide="eye" class="w-5 h-5 text-crema"></i>
+                                Интерактивный разрез: Гейзерная кофеварка и Итоговая чашка
+                            </h3>
+                            <p class="text-xs text-stone-500 dark:text-stone-400">
+                                Уровни воды, молотого кофе, экстракции и молока масштабируются в реальном времени
+                            </p>
+                        </div>
+                        <!-- Статус безопасности клапана -->
+                        <div id="safety-badge" class="px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Клапан открыт (Безопасно)
+                        </div>
+                    </div>
+
+                    <!-- Сетка двух визуализаций: Слева Мока, Справа Чашка напитка -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center bg-stone-100/70 dark:bg-espresso-950/80 rounded-2xl p-4 sm:p-6 border border-stone-200/80 dark:border-stone-800/80">
+
+                        <!-- 1. SVG РАЗРЕЗ МОКИ -->
+                        <div class="flex flex-col items-center">
+                            <div class="text-xs font-mono uppercase tracking-wider text-stone-400 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="layers" class="w-3.5 h-3.5 text-crema"></i>
+                                <span id="moka-svg-title">Разрез Моки (3 чашки)</span>
+                            </div>
+
+                            <div class="relative w-full max-w-[270px] aspect-[3/4] flex items-center justify-center">
+                                <svg viewBox="0 0 260 350" class="w-full h-full drop-shadow-lg">
+                                    <defs>
+                                        <!-- Градиент металлического корпуса -->
+                                        <linearGradient id="metalBody" x1="0" y1="0" x2="1" y2="0">
+                                            <stop offset="0%" stop-color="#57534e" />
+                                            <stop offset="50%" stop-color="#a8a29e" />
+                                            <stop offset="100%" stop-color="#44403c" />
+                                        </linearGradient>
+                                        <!-- Градиент воды в бойлере -->
+                                        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.88" />
+                                            <stop offset="100%" stop-color="#0284c7" stop-opacity="0.95" />
+                                        </linearGradient>
+                                        <!-- Градиент готового кофе в верхней чаше -->
+                                        <linearGradient id="coffeeYieldGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#d99b66" />
+                                            <stop offset="22%" stop-color="#78350f" />
+                                            <stop offset="100%" stop-color="#271c19" />
+                                        </linearGradient>
+                                        <!-- ClipPath для нижней чаши (бойлера) -->
+                                        <clipPath id="boilerClip">
+                                            <polygon points="62,215 198,215 214,322 46,322" />
+                                        </clipPath>
+                                        <!-- ClipPath для корзины с кофе -->
+                                        <clipPath id="basketClip">
+                                            <polygon points="88,182 172,182 164,225 96,225" />
+                                        </clipPath>
+                                        <!-- ClipPath для верхней чаши -->
+                                        <clipPath id="upperChamberClip">
+                                            <polygon points="52,55 208,55 192,168 68,168" />
+                                        </clipPath>
+                                    </defs>
+
+                                    <!-- === КРЫШКА И РУЧКА === -->
+                                    <!-- Ручка сбоку -->
+                                    <path d="M 205,72 L 238,72 C 245,72 248,78 248,88 L 248,148 C 248,158 242,162 232,162 L 200,152" 
+                                          fill="none" stroke="#292524" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" />
+                                    <!-- Крышка -->
+                                    <polygon points="48,52 212,52 195,35 65,35" fill="url(#metalBody)" stroke="#292524" stroke-width="2"/>
+                                    <!-- Ручка на крышке (пимпочка) -->
+                                    <polygon points="118,20 142,20 137,35 123,35" fill="#292524" />
+
+                                    <!-- === ВЕРХНЯЯ ЧАША (КОЛЛЕКТОР) === -->
+                                    <polygon points="50,54 210,54 194,170 66,170" fill="#1c1917" stroke="url(#metalBody)" stroke-width="4" />
+
+                                    <!-- Жидкость: Экстрагированный кофе в верхней чаше -->
+                                    <g clip-path="url(#upperChamberClip)">
+                                        <rect id="svg-upper-coffee" class="svg-liquid" x="45" y="135" width="170" height="40" fill="url(#coffeeYieldGrad)" />
+                                        <!-- Слой крема сверху -->
+                                        <rect id="svg-upper-crema" class="svg-liquid" x="45" y="132" width="170" height="4" fill="#e6ac77" opacity="0.85" />
+                                    </g>
+
+                                    <!-- Центральная трубка (гейзерный столб) в верхней чаше -->
+                                    <polygon points="122,78 138,78 143,170 117,170" fill="url(#metalBody)" stroke="#292524" stroke-width="1.5" />
+                                    <!-- Шапочка гейзера (рассекатель) -->
+                                    <path d="M 114,78 Q 130,68 146,78 Z" fill="url(#metalBody)" stroke="#292524" stroke-width="1.5" />
+                                    <!-- Струйки кофе из колонки -->
+                                    <path d="M 118,80 Q 104,95 102,135" fill="none" stroke="#d99b66" stroke-width="2" stroke-dasharray="3 3" opacity="0.75" />
+                                    <path d="M 142,80 Q 156,95 158,135" fill="none" stroke="#d99b66" stroke-width="2" stroke-dasharray="3 3" opacity="0.75" />
+
+                                    <!-- Подпись выхода кофе в верхней чаше -->
+                                    <rect x="65" y="102" width="130" height="22" rx="6" fill="#0c0a09" fill-opacity="0.75" />
+                                    <text id="svg-yield-text" x="130" y="117" text-anchor="middle" fill="#f5ebe1" font-family="JetBrains Mono" font-size="11" font-weight="bold">
+                                        Выход: ~46 мл
+                                    </text>
+
+                                    <!-- === СРЕДНЯЯ ЗОНА (РЕЗЬБА И ПРОКЛАДКА) === -->
+                                    <rect x="64" y="170" width="132" height="11" rx="2" fill="url(#metalBody)" stroke="#292524" stroke-width="2" />
+
+                                    <!-- === НИЖНЯЯ ЧАША (БОЙЛЕР ДЛЯ ВОДЫ) === -->
+                                    <polygon points="60,212 200,212 216,324 44,324" fill="#1c1917" stroke="url(#metalBody)" stroke-width="4" />
+                                    <!-- Переход к корзине -->
+                                    <polygon points="66,181 194,181 200,212 60,212" fill="#292524" stroke="url(#metalBody)" stroke-width="3" />
+
+                                    <!-- Жидкость: Вода в нижней чаше -->
+                                    <g clip-path="url(#boilerClip)">
+                                        <rect id="svg-boiler-water" class="svg-liquid" x="40" y="255" width="180" height="75" fill="url(#waterGrad)" />
+                                        <!-- Анимированные пузырьки нагрева -->
+                                        <circle cx="95" cy="310" r="3" fill="#bae6fd" class="bubble-1" />
+                                        <circle cx="135" cy="315" r="2.5" fill="#bae6fd" class="bubble-2" />
+                                        <circle cx="165" cy="308" r="3.5" fill="#bae6fd" class="bubble-3" />
+                                    </g>
+
+                                    <!-- === ВОРОНКА ДЛЯ КОФЕ (КОРЗИНА) === -->
+                                    <!-- Трубка воронки, уходящая почти до дна -->
+                                    <polygon points="125,225 135,225 133,314 127,314" fill="url(#metalBody)" stroke="#1c1917" stroke-width="1.5" opacity="0.9" />
+                                    <!-- Сама корзина для молотого кофе -->
+                                    <polygon points="86,181 174,181 165,226 95,226" fill="#292524" stroke="#d6d3d1" stroke-width="2" />
+
+                                    <!-- Заполнение корзины молотым кофе -->
+                                    <g clip-path="url(#basketClip)">
+                                        <rect id="svg-coffee-grounds" class="svg-liquid" x="84" y="190" width="92" height="38" fill="#78350f" />
+                                        <!-- Текстура кофейной таблетки (точки) -->
+                                        <line x1="90" y1="198" x2="170" y2="198" stroke="#92400e" stroke-width="1.5" stroke-dasharray="2 4" />
+                                        <line x1="92" y1="208" x2="168" y2="208" stroke="#451a03" stroke-width="1.5" stroke-dasharray="3 3" />
+                                        <line x1="95" y1="217" x2="165" y2="217" stroke="#92400e" stroke-width="1.5" stroke-dasharray="2 5" />
+                                    </g>
+
+                                    <!-- Подпись граммовки кофе прямо на корзине -->
+                                    <rect x="93" y="194" width="74" height="19" rx="4" fill="#0c0a09" fill-opacity="0.78" />
+                                    <text id="svg-coffee-text" x="130" y="207" text-anchor="middle" fill="#fbbf24" font-family="JetBrains Mono" font-size="10.5" font-weight="bold">
+                                        12.5 г кофе
+                                    </text>
+
+                                    <!-- === КЛАПАН БЕЗОПАСНОСТИ (SAFETY VALVE) === -->
+                                    <!-- Пунктирная линия уровня клапана -->
+                                    <line x1="48" y1="228" x2="212" y2="228" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="4 3" opacity="0.85" />
+                                    <!-- Сам клапан слева на стенке бойлера -->
+                                    <polygon id="svg-valve-icon" points="54,222 65,224 65,232 54,234" fill="#f59e0b" stroke="#1c1917" stroke-width="1" />
+                                    <text x="70" y="239" fill="#fbbf24" font-family="JetBrains Mono" font-size="8.5" opacity="0.9">
+                                        Клапан (MAX)
+                                    </text>
+
+                                    <!-- Подпись воды в нижней чаше -->
+                                    <rect x="70" y="276" width="120" height="24" rx="6" fill="#0c0a09" fill-opacity="0.75" />
+                                    <text id="svg-water-text" x="130" y="292" text-anchor="middle" fill="#38bdf8" font-family="JetBrains Mono" font-size="11.5" font-weight="bold">
+                                        70 мл воды
+                                    </text>
+
+                                    <!-- Пламя конфорки снизу -->
+                                    <path d="M 85,338 Q 92,326 100,338 Q 115,323 130,338 Q 145,323 160,338 Q 168,326 175,338" fill="none" stroke="#f97316" stroke-width="3" stroke-linecap="round" opacity="0.8" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- 2. SVG РАЗРЕЗ ИТОГОВОЙ ЧАШКИ НАПИТКА -->
+                        <div class="flex flex-col items-center">
+                            <div class="text-xs font-mono uppercase tracking-wider text-stone-400 mb-2 flex items-center gap-1.5">
+                                <i data-lucide="coffee" class="w-3.5 h-3.5 text-crema"></i>
+                                <span id="cup-svg-title">Слои в чашке: Эспрессо</span>
+                            </div>
+
+                            <div class="relative w-full max-w-[270px] aspect-[3/4] flex items-center justify-center">
+                                <svg viewBox="0 0 260 350" class="w-full h-full drop-shadow-lg">
+                                    <defs>
+                                        <!-- ClipPath внутренней части бокала/чашки -->
+                                        <clipPath id="cupInnerClip">
+                                            <path d="M 48,75 L 212,75 L 194,265 C 190,292 168,308 130,308 C 92,308 70,292 66,265 Z" />
+                                        </clipPath>
+                                        <linearGradient id="espressoBaseGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#652b0d" />
+                                            <stop offset="100%" stop-color="#271206" />
+                                        </linearGradient>
+                                        <linearGradient id="steamedMilkGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#fffbeb" />
+                                            <stop offset="100%" stop-color="#f5ebe1" />
+                                        </linearGradient>
+                                    </defs>
+
+                                    <!-- Ручка чашки -->
+                                    <path d="M 204,110 L 228,110 C 242,110 248,125 248,155 C 248,185 238,205 220,205 L 198,205"
+                                          fill="none" stroke="#78716c" stroke-width="10" stroke-linecap="round" />
+
+                                    <!-- Фон пустой чашки -->
+                                    <path d="M 48,75 L 212,75 L 194,265 C 190,292 168,308 130,308 C 92,308 70,292 66,265 Z"
+                                          fill="#1c1917" />
+
+                                    <!-- Слои напитка внутри чашки (снизу вверх: База кофе -> Молоко/Вода -> Микропена) -->
+                                    <g clip-path="url(#cupInnerClip)">
+                                        <!-- Слой 3 (Верхний): Микропена (Foam) -->
+                                        <rect id="cup-layer-foam" class="svg-liquid" x="40" y="200" width="180" height="0" fill="#ffffff" opacity="0.95" />
+                                        
+                                        <!-- Слой 2 (Средний): Взбитое молоко ИЛИ Горячая вода (Americano) -->
+                                        <rect id="cup-layer-modifier" class="svg-liquid" x="40" y="200" width="180" height="0" fill="url(#steamedMilkGrad)" />
+
+                                        <!-- Слой 1 (Нижний): Кофейная база из Моки -->
+                                        <rect id="cup-layer-coffee" class="svg-liquid" x="40" y="230" width="180" height="80" fill="url(#espressoBaseGrad)" />
+                                        <!-- Тонкая прослойка крема на кофе -->
+                                        <rect id="cup-layer-crema" class="svg-liquid" x="40" y="226" width="180" height="5" fill="#d99b66" />
+                                    </g>
+
+                                    <!-- Стеклянный контур чашки -->
+                                    <path d="M 46,74 L 214,74 L 195,266 C 191,294 169,310 130,310 C 91,310 69,294 65,266 Z"
+                                          fill="none" stroke="#a8a29e" stroke-width="4" />
+
+                                    <!-- Блик стекла -->
+                                    <path d="M 62,90 L 76,255" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.18" />
+
+                                    <!-- Блюдце под чашкой -->
+                                    <path d="M 35,316 Q 130,330 225,316" fill="none" stroke="#78716c" stroke-width="6" stroke-linecap="round" />
+
+                                    <!-- Динамические подписи слоев прямо на чашке -->
+                                    <!-- Плашка для Микропены -->
+                                    <g id="cup-label-foam-group" opacity="0">
+                                        <rect x="75" y="92" width="110" height="20" rx="5" fill="#1c1917" fill-opacity="0.75" />
+                                        <text id="cup-label-foam" x="130" y="106" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="10" font-weight="bold">
+                                            Пена: ~15 мл
+                                        </text>
+                                    </g>
+
+                                    <!-- Плашка для Молока / Воды -->
+                                    <g id="cup-label-modifier-group" opacity="0">
+                                        <rect x="62" y="155" width="136" height="22" rx="6" fill="#1c1917" fill-opacity="0.82" />
+                                        <text id="cup-label-modifier" x="130" y="170" text-anchor="middle" fill="#fde68a" font-family="JetBrains Mono" font-size="10.5" font-weight="bold">
+                                            Молоко: +115 мл
+                                        </text>
+                                    </g>
+
+                                    <!-- Плашка для Кофейной базы -->
+                                    <g id="cup-label-coffee-group">
+                                        <rect x="65" y="255" width="130" height="22" rx="6" fill="#0c0a09" fill-opacity="0.82" />
+                                        <text id="cup-label-coffee" x="130" y="270" text-anchor="middle" fill="#f5ebe1" font-family="JetBrains Mono" font-size="10.5" font-weight="bold">
+                                            Мока-база: 46 мл
+                                        </text>
+                                    </g>
+
+                                    <!-- Итоговый объем сверху чашки -->
+                                    <rect x="65" y="34" width="130" height="26" rx="8" fill="#d99b66" />
+                                    <text id="cup-total-volume" x="130" y="51" text-anchor="middle" fill="#160f0d" font-family="JetBrains Mono" font-size="12" font-weight="bold">
+                                        Итого: 46 мл
+                                    </text>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Сводка ключевых показателей (4 мини-карточки под чертежами) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                        <div class="p-3 rounded-xl bg-stone-100 dark:bg-espresso-950/60 border border-stone-200 dark:border-stone-800">
+                            <div class="text-[11px] text-stone-500 dark:text-stone-400">Закладка (Воронка)</div>
+                            <div id="stat-dose" class="font-mono font-bold text-base sm:text-lg text-amber-600 dark:text-amber-400">12.5 г</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-stone-100 dark:bg-espresso-950/60 border border-stone-200 dark:border-stone-800">
+                            <div class="text-[11px] text-stone-500 dark:text-stone-400">Вода в бойлере</div>
+                            <div id="stat-water" class="font-mono font-bold text-base sm:text-lg text-sky-600 dark:text-sky-400">70 мл</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-stone-100 dark:bg-espresso-950/60 border border-stone-200 dark:border-stone-800">
+                            <div class="text-[11px] text-stone-500 dark:text-stone-400">Выход базы (Мока)</div>
+                            <div id="stat-yield" class="font-mono font-bold text-base sm:text-lg text-crema-dark dark:text-crema">~46 мл</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-stone-100 dark:bg-espresso-950/60 border border-stone-200 dark:border-stone-800">
+                            <div class="text-[11px] text-stone-500 dark:text-stone-400">Добавка (Молоко/Вода)</div>
+                            <div id="stat-modifier" class="font-mono font-bold text-base sm:text-lg text-stone-700 dark:text-stone-200">0 мл</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- КАРТОЧКА Г: ДИНАМИЧЕСКИЙ ПОШАГОВЫЙ РЕЦЕПТ ПРИГОТОВЛЕНИЯ -->
+                <div class="bg-white dark:bg-espresso-900/60 border border-stone-200 dark:border-stone-800/90 rounded-2xl p-5 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-stone-200 dark:border-stone-800 pb-3 mb-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="list-checks" class="w-5 h-5 text-crema"></i>
+                            <h3 class="font-bold text-base">Пошаговый протокол заваривания</h3>
+                        </div>
+                        <span id="protocol-badge" class="text-xs font-mono text-crema">Мока-Эспрессо (Концентрат)</span>
+                    </div>
+
+                    <div id="recipe-steps" class="space-y-3 text-sm">
+                        <!-- Шаги генерируются динамически в JS с учетом выбранных граммов и миллилитров -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Футер для GitHub -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 py-8 mt-6 border-t border-stone-200 dark:border-stone-800/80 text-xs text-stone-500 dark:text-stone-400 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <i data-lucide="coffee" class="w-4 h-4 text-crema"></i>
+            <span><strong>MokaLab</strong> — создано для точной настройки пропорций гейзерной кофеварки. Готово к публикации на GitHub Pages.</span>
+        </div>
+        <div class="flex items-center gap-4 font-mono">
+            <span>Удержание воды таблеткой: ~1.9 мл/г</span>
+            <span>•</span>
+            <button onclick="openJsonModal()" class="text-crema hover:underline">Экспорт JSON</button>
+        </div>
+    </footer>
+
+    <!-- ОСНОВНАЯ ЛОГИКА ПРИЛОЖЕНИЯ -->
+    <script>
+        // ==========================================
+        // 1. БАЗА ДАННЫХ РАЗМЕРОВ МОКИ И НАПИТКОВ
+        // ==========================================
+        const MOKA_SIZES = {
+            1: { cups: 1, name: "1 чашка", maxWater: 60, maxCoffee: 8, defaultEspressoCoffee: 7.5, defaultEspressoWater: 45 },
+            2: { cups: 2, name: "2 чашки", maxWater: 100, maxCoffee: 13, defaultEspressoCoffee: 12.0, defaultEspressoWater: 70 },
+            3: { cups: 3, name: "3 чашки", maxWater: 130, maxCoffee: 16, defaultEspressoCoffee: 12.5, defaultEspressoWater: 70 },
+            4: { cups: 4, name: "4 чашки", maxWater: 190, maxCoffee: 22, defaultEspressoCoffee: 17.0, defaultEspressoWater: 95 },
+            6: { cups: 6, name: "6 чашек", maxWater: 280, maxCoffee: 30, defaultEspressoCoffee: 24.0, defaultEspressoWater: 135 }
+        };
+
+        // Каталог рецептур напитков
+        // baseStyle: 'concentrate' (например, 12.5г на 70мл воды в нижнюю чашу) или 'classic' (полная нижняя чаша до клапана)
+        const DRINKS = {
+            espresso: {
+                id: 'espresso',
+                name: 'Эспрессо (Мока)',
+                shortDesc: 'Плотный концентрат 12.5г / 70мл',
+                icon: 'flame',
+                baseStyle: 'concentrate',
+                modifierType: 'none', // без молока и воды
+                modifierRatio: 0,     // множитель к выходу кофе
+                foamShare: 0,
+                defaultCoffee3Cup: 12.5,
+                defaultWater3Cup: 70
+            },
+            flatwhite: {
+                id: 'flatwhite',
+                name: 'Флэт Уайт',
+                shortDesc: 'Мока-эспрессо + тонкое молоко',
+                icon: 'milk',
+                baseStyle: 'concentrate',
+                modifierType: 'milk',
+                modifierRatio: 2.5,   // ~115 мл молока на 46 мл концентрированного кофе
+                foamShare: 0.15,      // тонкий слой микропены
+                defaultCoffee3Cup: 12.5,
+                defaultWater3Cup: 70
+            },
+            cappuccino: {
+                id: 'cappuccino',
+                name: 'Капучино',
+                shortDesc: 'База + молоко и пышная пена',
+                icon: 'cloud',
+                baseStyle: 'concentrate',
+                modifierType: 'milk',
+                modifierRatio: 3.0,   // ~140 мл молока и пены на 46 мл базы
+                foamShare: 0.32,      // густая шапка пены
+                defaultCoffee3Cup: 12.5,
+                defaultWater3Cup: 70
+            },
+            latte: {
+                id: 'latte',
+                name: 'Латте',
+                shortDesc: 'Мягкий молочный коктейль',
+                icon: 'glass-water',
+                baseStyle: 'concentrate',
+                modifierType: 'milk',
+                modifierRatio: 4.3,   // ~200 мл молока на 46 мл базы
+                foamShare: 0.12,
+                defaultCoffee3Cup: 12.5,
+                defaultWater3Cup: 70
+            },
+            cortado: {
+                id: 'cortado',
+                name: 'Кортадо',
+                shortDesc: 'Баланс 1:1 кофе и теплого молока',
+                icon: 'scale',
+                baseStyle: 'concentrate',
+                modifierType: 'milk',
+                modifierRatio: 1.0,   // 1:1 к выходу готового кофе
+                foamShare: 0.10,
+                defaultCoffee3Cup: 12.5,
+                defaultWater3Cup: 70
+            },
+            americano: {
+                id: 'americano',
+                name: 'Американо',
+                shortDesc: 'Концентрат + горячая вода (Bypass)',
+                icon: 'droplet',
+                baseStyle: 'concentrate',
+                modifierType: 'water',
+                modifierRatio: 2.6,   // ~120 мл горячей воды поверх ~46 мл базы
+                foamShare: 0,
+                defaultCoffee3Cup: 12.5,
+                defaultWater3Cup: 70
+            },
+            classic: {
+                id: 'classic',
+                name: 'Классический Мока',
+                shortDesc: 'Полная чаша воды до клапана',
+                icon: 'coffee',
+                baseStyle: 'classic',
+                modifierType: 'none',
+                modifierRatio: 0,
+                foamShare: 0,
+                defaultCoffee3Cup: 15.0,
+                defaultWater3Cup: 130
+            }
+        };
+
+        // База кофемолок (оптимальные щелчки для Мока-Эспрессо 12.5г/70мл на Timemore C3S Pro = 15 щелчков)
+        const GRINDERS = {
+            timemore_c3: { name: "Timemore C3 / C3S Pro", baseClicks: 15, range: 1, note: "Эталон для густого Мока-Эспрессо и Флэт Уайт" },
+            timemore_c2: { name: "Timemore Chestnut C2", baseClicks: 14, range: 1, note: "На 1 клик мельче из-за геометрии жерновов C2" },
+            '1zpresso_q2': { name: "1Zpresso Q2 / JX", baseClicks: 42, range: 3, note: "Около 1.4 оборота от полного смыкания жерновов" },
+            comandante: { name: "Comandante C40", baseClicks: 16, range: 2, note: "Стандартная ось (32 клика на Red Clix)" },
+            kingrinder_k6: { name: "Kingrinder K6", baseClicks: 55, range: 4, note: "Внешнее кольцо: ~55 кликов от нуля" }
+        };
+
+        // ==========================================
+        // 2. СОСТОЯНИЕ ПРИЛОЖЕНИЯ (STATE)
+        // ==========================================
+        let state = {
+            selectedDrink: 'espresso',
+            mokaSize: 3,           // По умолчанию 3 чашки (идеально для 12.5г / 70мл)
+            coffeeGrams: 12.5,     // Ваш пример из ТЗ: 12.5 г кофе
+            waterMl: 70,           // Ваш пример из ТЗ: 70 мл воды в нижнюю чашу
+            modifierMl: 0,         // Молоко или вода в чашку
+            ratioLocked: false,    // Блокировка соотношения Вода/Кофе
+            lockedRatioValue: 5.6, // 70 / 12.5 = 5.6
+            savedPresets: []
+        };
+
+        // Коэффициент впитывания воды кофейной таблеткой в Моке (~1.9 мл на 1 грамм кофе остаётся в жмыхе и на дне бойлера)
+        const WATER_RETENTION_PER_GRAM = 1.9;
+
+        // ==========================================
+        // 3. РАСЧЕТ ВЫХОДА КОФЕ И ПРОПОРЦИЙ
+        // ==========================================
+        function calculateCoffeeYield(waterMl, coffeeGrams) {
+            const retained = coffeeGrams * WATER_RETENTION_PER_GRAM;
+            const rawYield = waterMl - retained;
+            // Минимум 10 мл, максимум 88% от залитой воды
+            return Math.max(10, Math.round(Math.min(rawYield, waterMl * 0.88)));
+        }
+
+        // Инициализация кнопок напитков
+        function renderDrinkSelector() {
+            const container = document.getElementById('drink-grid');
+            container.innerHTML = '';
+
+            Object.values(DRINKS).forEach(drink => {
+                const isSelected = state.selectedDrink === drink.id;
+                const btn = document.createElement('button');
+                btn.onclick = () => selectDrink(drink.id);
+                btn.className = `text-left p-3 rounded-xl border transition-all duration-200 flex flex-col justify-between group ${
+                    isSelected
+                        ? 'bg-crema/15 dark:bg-crema/20 border-crema shadow-sm ring-1 ring-crema'
+                        : 'bg-stone-50 dark:bg-espresso-950/50 border-stone-200 dark:border-stone-800 hover:border-crema/50'
+                }`;
+
+                btn.innerHTML = `
+                    <div class="flex items-center justify-between w-full mb-1.5">
+                        <span class="p-1.5 rounded-lg ${isSelected ? 'bg-crema text-espresso-950' : 'bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-300 group-hover:text-crema'} transition">
+                            <i data-lucide="${drink.icon}" class="w-4 h-4"></i>
+                        </span>
+                        ${isSelected ? '<span class="w-2 h-2 rounded-full bg-crema"></span>' : ''}
+                    </div>
+                    <div>
+                        <div class="font-bold text-xs sm:text-sm leading-tight ${isSelected ? 'text-stone-900 dark:text-white' : 'text-stone-700 dark:text-stone-200'}">${drink.name}</div>
+                        <div class="text-[10px] text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-1">${drink.shortDesc}</div>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
+        // Инициализация кнопок размера Моки
+        function renderMokaSizeButtons() {
+            const container = document.getElementById('moka-size-buttons');
+            container.innerHTML = '';
+
+            Object.values(MOKA_SIZES).forEach(sizeObj => {
+                const active = state.mokaSize === sizeObj.cups;
+                const btn = document.createElement('button');
+                btn.onclick = () => selectMokaSize(sizeObj.cups);
+                btn.className = `py-2 px-1 rounded-xl font-mono text-xs font-semibold border transition ${
+                    active
+                        ? 'bg-crema text-espresso-950 border-crema shadow-sm font-bold'
+                        : 'bg-stone-100 dark:bg-espresso-950 border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-300 hover:border-crema/50'
+                }`;
+                btn.innerHTML = `
+                    <div>${sizeObj.cups} чаш.</div>
+                    <div class="text-[9px] opacity-75">${sizeObj.maxWater}мл</div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // Выбор напитка
+        function selectDrink(drinkId) {
+            state.selectedDrink = drinkId;
+            const drink = DRINKS[drinkId];
+            const moka = MOKA_SIZES[state.mokaSize];
+
+            // Если это эталонная 3-чашечная мока и концентрат — ставим ровно 12.5г на 70мл из вашего примера
+            if (drink.baseStyle === 'concentrate') {
+                if (state.mokaSize === 3) {
+                    state.coffeeGrams = 12.5;
+                    state.waterMl = 70;
+                } else {
+                    state.coffeeGrams = moka.defaultEspressoCoffee;
+                    state.waterMl = moka.defaultEspressoWater;
+                }
+            } else {
+                // Классический полный бойлер
+                state.coffeeGrams = Math.round((moka.maxCoffee * 0.92) * 2) / 2;
+                state.waterMl = moka.maxWater;
+            }
+
+            state.lockedRatioValue = +(state.waterMl / state.coffeeGrams).toFixed(2);
+            autoSyncModifier(false);
+            renderDrinkSelector();
+            updateUI();
+        }
+
+        // Выбор размера гейзерной кофеварки
+        function selectMokaSize(cups) {
+            state.mokaSize = cups;
+            const moka = MOKA_SIZES[cups];
+            const drink = DRINKS[state.selectedDrink];
+
+            // Масштабируем дозу под новый размер Моки
+            if (drink.baseStyle === 'concentrate') {
+                state.coffeeGrams = moka.defaultEspressoCoffee;
+                state.waterMl = moka.defaultEspressoWater;
+            } else {
+                state.coffeeGrams = Math.round((moka.maxCoffee * 0.92) * 2) / 2;
+                state.waterMl = moka.maxWater;
+            }
+
+            state.lockedRatioValue = +(state.waterMl / state.coffeeGrams).toFixed(2);
+            autoSyncModifier(false);
+            renderMokaSizeButtons();
+            updateUI();
+        }
+
+        // Быстрая установка 12.5г / 70мл
+        function setQuickPreset(coffee, water) {
+            state.coffeeGrams = coffee;
+            state.waterMl = water;
+            state.lockedRatioValue = +(water / coffee).toFixed(2);
+            autoSyncModifier(false);
+            updateUI();
+            showToast("Установлен эталон: 12.5 г кофе / 70 мл воды");
+        }
+
+        // Сброс к эталону текущего напитка
+        function resetToDrinkDefault() {
+            selectDrink(state.selectedDrink);
+            showToast("Пропорции сброшены к эталону напитка");
+        }
+
+        // Автоматический расчет количества молока или воды под текущий выход кофе
+        function autoSyncModifier(notify = true) {
+            const drink = DRINKS[state.selectedDrink];
+            const yieldMl = calculateCoffeeYield(state.waterMl, state.coffeeGrams);
+
+            if (drink.modifierType === 'none') {
+                state.modifierMl = 0;
+            } else {
+                // Округляем до 5 мл для удобства вливания
+                state.modifierMl = Math.round((yieldMl * drink.modifierRatio) / 5) * 5;
+            }
+            if (notify) {
+                updateUI();
+                showToast(`Количество добавки пересчитано: ${state.modifierMl} мл`);
+            }
+        }
+
+        // Обработчик изменения количества кофе
+        function handleCoffeeChange(val) {
+            let parsed = parseFloat(val);
+            if (isNaN(parsed) || parsed < 4) parsed = 4;
+            if (parsed > 45) parsed = 45;
+            state.coffeeGrams = parsed;
+
+            if (state.ratioLocked) {
+                state.waterMl = Math.round(state.coffeeGrams * state.lockedRatioValue);
+            }
+            // Если выбран молочный напиток или американо — плавно адаптируем рекомендацию
+            updateUI();
+        }
+
+        // Обработчик изменения количества воды в нижней чаше
+        function handleWaterChange(val) {
+            let parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 20) parsed = 20;
+            if (parsed > 380) parsed = 380;
+            state.waterMl = parsed;
+
+            if (state.ratioLocked) {
+                state.coffeeGrams = Math.round((state.waterMl / state.lockedRatioValue) * 2) / 2;
+            }
+            updateUI();
+        }
+
+        // Обработчик изменения количества молока / горячей воды
+        function handleModifierChange(val) {
+            let parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 0) parsed = 0;
+            if (parsed > 350) parsed = 350;
+            state.modifierMl = parsed;
+            updateUI();
+        }
+
+        // Переключение блокировки коэффициента Brew Ratio
+        function toggleRatioLock() {
+            state.ratioLocked = !state.ratioLocked;
+            state.lockedRatioValue = +(state.waterMl / state.coffeeGrams).toFixed(2);
+            updateUI();
+        }
+
+        // ==========================================
+        // 4. ОБНОВЛЕНИЕ ИНТЕРФЕЙСА И SVG ВИЗУАЛИЗАЦИИ
+        // ==========================================
+        function updateUI() {
+            const moka = MOKA_SIZES[state.mokaSize];
+            const drink = DRINKS[state.selectedDrink];
+            const yieldMl = calculateCoffeeYield(state.waterMl, state.coffeeGrams);
+            const ratio = (state.waterMl / state.coffeeGrams).toFixed(1);
+
+            // 1. Синхронизация инпутов и ползунков
+            const coffeeSlider = document.getElementById('coffee-slider');
+            coffeeSlider.max = Math.max(moka.maxCoffee + 6, 25);
+            coffeeSlider.value = state.coffeeGrams;
+            document.getElementById('coffee-input').value = state.coffeeGrams;
+
+            const waterSlider = document.getElementById('water-slider');
+            waterSlider.max = Math.round(moka.maxWater * 1.25); // Позволяем залить выше клапана чтобы показать предупреждение
+            waterSlider.value = state.waterMl;
+            document.getElementById('water-input').value = state.waterMl;
+
+            document.getElementById('moka-max-info').textContent = `Клапан: ${moka.maxWater} мл | Корзина: ~${moka.maxCoffee} г`;
+            document.getElementById('valve-limit-label').textContent = `Макс до клапана: ${moka.maxWater} мл`;
+
+            // Статус заполнения корзины кофе
+            const basketPct = Math.round((state.coffeeGrams / moka.maxCoffee) * 100);
+            const basketStatusEl = document.getElementById('basket-fill-status');
+            if (basketPct > 105) {
+                basketStatusEl.textContent = `Корзина переполнена (${basketPct}%) — не утрамбовывайте!`;
+                basketStatusEl.className = 'text-rose-500 font-semibold';
+            } else {
+                basketStatusEl.textContent = `Заполнение воронки: ${basketPct}% (норма 75–100%)`;
+                basketStatusEl.className = 'text-stone-400';
+            }
+
+            // Блокировка Brew Ratio
+            document.getElementById('brew-ratio-badge').textContent = `1 : ${ratio}`;
+            const lockBtn = document.getElementById('lock-ratio-btn');
+            const lockText = document.getElementById('lock-text');
+            if (state.ratioLocked) {
+                lockBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-semibold flex items-center gap-1.5 bg-crema text-espresso-950 border border-crema transition';
+                lockText.textContent = 'Зафиксировано';
+            } else {
+                lockBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-medium flex items-center gap-1.5 bg-white dark:bg-espresso-900 border border-stone-300 dark:border-stone-700 hover:border-crema transition';
+                lockText.textContent = 'Свободно';
+            }
+
+            // 2. Контрол Молока / Воды (Модификатора)
+            const modBox = document.getElementById('modifier-control-box');
+            const milkSlider = document.getElementById('milk-slider');
+            const milkInput = document.getElementById('milk-input');
+            const modLabel = document.getElementById('modifier-label');
+            const modHint = document.getElementById('modifier-ratio-hint');
+            const modDot = document.getElementById('modifier-dot');
+
+            milkSlider.value = state.modifierMl;
+            milkInput.value = state.modifierMl;
+
+            if (drink.modifierType === 'milk') {
+                modBox.classList.remove('opacity-60');
+                modLabel.textContent = `Молоко для «${drink.name}» (мл)`;
+                modDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-100 border border-amber-400 inline-block';
+                const idealMilk = Math.round((yieldMl * drink.modifierRatio) / 5) * 5;
+                modHint.textContent = `Оптимально под выход ${yieldMl} мл кофе: ~${idealMilk} мл молока`;
+            } else if (drink.modifierType === 'water') {
+                modBox.classList.remove('opacity-60');
+                modLabel.textContent = `Горячая вода для Американо (мл)`;
+                modDot.className = 'w-2.5 h-2.5 rounded-full bg-sky-400 inline-block';
+                const idealWater = Math.round((yieldMl * drink.modifierRatio) / 5) * 5;
+                modHint.textContent = `Оптимально под выход ${yieldMl} мл кофе: ~${idealWater} мл воды`;
+            } else {
+                modLabel.textContent = `Доп. молоко / вода в чашку (опционально)`;
+                modDot.className = 'w-2.5 h-2.5 rounded-full bg-stone-400 inline-block';
+                modHint.textContent = `Для чистого «${drink.name}» добавки не требуются (0 мл)`;
+            }
+
+            // 3. АНИМАЦИЯ SVG РАЗРЕЗА МОКИ
+            document.getElementById('moka-svg-title').textContent = `Разрез Моки (${moka.name})`;
+
+            // Бойлер: координаты в SVG: дно y=322, уровень клапана y=228 (высота до клапана = 94px)
+            const waterRatioToValve = state.waterMl / moka.maxWater;
+            const waterValveStatus = document.getElementById('water-valve-status');
+            const safetyBadge = document.getElementById('safety-badge');
+            const svgBoilerWater = document.getElementById('svg-boiler-water');
+
+            const boilerBottomY = 322;
+            const maxSafeHeightPx = 94; // от 322 до 228
+            const currentWaterHeightPx = Math.min(108, Math.max(14, Math.round(waterRatioToValve * maxSafeHeightPx)));
+            const currentWaterY = boilerBottomY - currentWaterHeightPx;
+
+            svgBoilerWater.setAttribute('y', currentWaterY);
+            svgBoilerWater.setAttribute('height', currentWaterHeightPx);
+            document.getElementById('svg-water-text').textContent = `${state.waterMl} мл воды`;
+
+            // Проверка перекрытия клапана безопасности
+            const pctOfValve = Math.round(waterRatioToValve * 100);
+            if (state.waterMl > moka.maxWater) {
+                waterValveStatus.textContent = `ВНИМАНИЕ: Выше клапана (${pctOfValve}%)!`;
+                waterValveStatus.className = 'text-rose-500 font-bold';
+                safetyBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-semibold bg-rose-500/20 text-rose-500 border border-rose-500/40 flex items-center gap-1.5';
+                safetyBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span> Клапан перекрыт! Слейте ${state.waterMl - moka.maxWater} мл`;
+            } else {
+                waterValveStatus.textContent = `${pctOfValve}% от уровня клапана безопасности`;
+                waterValveStatus.className = 'text-emerald-600 dark:text-emerald-400';
+                safetyBadge.className = 'px-3 py-1 rounded-full text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5';
+                safetyBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Клапан открыт (Безопасно)`;
+            }
+
+            // Корзина для кофе в SVG: дно y=225, верх y=182 (высота 43px)
+            const basketRatio = Math.min(1.05, Math.max(0.25, state.coffeeGrams / moka.maxCoffee));
+            const groundsHeightPx = Math.round(basketRatio * 41);
+            const groundsY = 225 - groundsHeightPx;
+            const svgGrounds = document.getElementById('svg-coffee-grounds');
+            svgGrounds.setAttribute('y', groundsY);
+            svgGrounds.setAttribute('height', groundsHeightPx);
+            document.getElementById('svg-coffee-text').textContent = `${state.coffeeGrams} г кофе`;
+
+            // Верхняя чаша Моки в SVG: дно y=168, верх y=60 (макс высота ~95px)
+            const maxPossibleYield = moka.maxWater * 0.82;
+            const yieldRatio = Math.min(1, Math.max(0.18, yieldMl / maxPossibleYield));
+            const upperHeightPx = Math.round(yieldRatio * 88);
+            const upperY = 168 - upperHeightPx;
+            document.getElementById('svg-upper-coffee').setAttribute('y', upperY);
+            document.getElementById('svg-upper-coffee').setAttribute('height', upperHeightPx);
+            document.getElementById('svg-upper-crema').setAttribute('y', upperY - 3);
+            document.getElementById('svg-yield-text').textContent = `Выход: ~${yieldMl} мл`;
+
+            // 4. АНИМАЦИЯ SVG ИТОГОВОЙ ЧАШКИ НАПИТКА
+            document.getElementById('cup-svg-title').textContent = `Слои в чашке: ${drink.name}`;
+            const totalDrinkVolume = yieldMl + state.modifierMl;
+            document.getElementById('cup-total-volume').textContent = `Итого: ${totalDrinkVolume} мл`;
+
+            // Геометрия внутренней части чашки: дно y=308, верх y=82 (доступная высота 220px)
+            // Масштабируем так, чтобы чашка выглядела наглядно и для 45 мл эспрессо, и для 250 мл латте
+            const cupVisualCapacity = Math.max(180, totalDrinkVolume * 1.15);
+            const cupBottomY = 308;
+            const cupMaxPx = 215;
+
+            const coffeeLayerPx = Math.max(36, Math.round((yieldMl / cupVisualCapacity) * cupMaxPx));
+            const coffeeTopY = cupBottomY - coffeeLayerPx;
+
+            const svgCupCoffee = document.getElementById('cup-layer-coffee');
+            svgCupCoffee.setAttribute('y', coffeeTopY);
+            svgCupCoffee.setAttribute('height', coffeeLayerPx);
+            document.getElementById('cup-layer-crema').setAttribute('y', coffeeTopY - 4);
+            document.getElementById('cup-label-coffee').textContent = `Мока-база: ${yieldMl} мл`;
+
+            // Слой молока или воды в чашке
+            const svgCupMod = document.getElementById('cup-layer-modifier');
+            const svgCupFoam = document.getElementById('cup-layer-foam');
+            const modLabelGroup = document.getElementById('cup-label-modifier-group');
+            const foamLabelGroup = document.getElementById('cup-label-foam-group');
+
+            if (state.modifierMl > 0) {
+                const totalModPx = Math.max(32, Math.round((state.modifierMl / cupVisualCapacity) * cupMaxPx));
+                const foamShare = drink.modifierType === 'milk' ? (drink.foamShare || 0.15) : 0;
+                const foamMl = Math.round(state.modifierMl * foamShare);
+                const liquidModMl = state.modifierMl - foamMl;
+
+                const foamPx = foamMl > 0 ? Math.max(14, Math.round(totalModPx * foamShare)) : 0;
+                const liquidModPx = totalModPx - foamPx;
+
+                const modTopY = coffeeTopY - liquidModPx;
+                const foamTopY = modTopY - foamPx;
+
+                svgCupMod.setAttribute('y', modTopY);
+                svgCupMod.setAttribute('height', liquidModPx);
+
+                // Цвет слоя: молоко или горячая вода для Американо
+                if (drink.modifierType === 'water') {
+                    svgCupMod.setAttribute('fill', 'url(#waterGrad)');
+                    document.getElementById('cup-label-modifier').textContent = `Горячая вода: +${state.modifierMl} мл`;
+                } else {
+                    svgCupMod.setAttribute('fill', 'url(#steamedMilkGrad)');
+                    document.getElementById('cup-label-modifier').textContent = `Молоко: +${liquidModMl} мл`;
+                }
+
+                modLabelGroup.setAttribute('opacity', '1');
+
+                if (foamPx > 0) {
+                    svgCupFoam.setAttribute('y', foamTopY);
+                    svgCupFoam.setAttribute('height', foamPx);
+                    document.getElementById('cup-label-foam').textContent = `Микропена: ~${foamMl} мл`;
+                    foamLabelGroup.setAttribute('opacity', '1');
+                } else {
+                    svgCupFoam.setAttribute('height', 0);
+                    foamLabelGroup.setAttribute('opacity', '0');
+                }
+            } else {
+                svgCupMod.setAttribute('height', 0);
+                svgCupFoam.setAttribute('height', 0);
+                modLabelGroup.setAttribute('opacity', '0');
+                foamLabelGroup.setAttribute('opacity', '0');
+            }
+
+            // 5. Сводные карточки под визуализацией
+            document.getElementById('stat-dose').textContent = `${state.coffeeGrams} г`;
+            document.getElementById('stat-water').textContent = `${state.waterMl} мл`;
+            document.getElementById('stat-yield').textContent = `~${yieldMl} мл`;
+            document.getElementById('stat-modifier').textContent = state.modifierMl > 0
+                ? `+${state.modifierMl} мл`
+                : '0 мл';
+
+            // 6. Расчет щелчков кофемолки и температуры воды
+            updateGrinderAndPrep(ratio, yieldMl);
+
+            // 7. Обновление пошагового рецепта
+            renderProtocolSteps(yieldMl, totalDrinkVolume);
+        }
+
+        // Расчет рекомендаций по кофемолке
+        function updateGrinderAndPrep(ratio, yieldMl) {
+            const grinderKey = document.getElementById('grinder-select').value;
+            const blendKey = document.getElementById('blend-select').value;
+            const grinder = GRINDERS[grinderKey];
+
+            // Корректировка кликов от соотношения и типа обжарки
+            let offset = 0;
+            if (parseFloat(ratio) > 7.0) offset += 1; // Для классического длинного мока чуть крупнее
+            if (blendKey === 'arabica_dark') offset += 1; // Темная обжарка требует помола чуть крупнее
+            if (blendKey === 'arabica_light') offset -= 1; // Светлая обжарка требует помола чуть мельче
+
+            const optimalClicks = grinder.baseClicks + offset;
+            const minClicks = optimalClicks - grinder.range;
+            const maxClicks = optimalClicks + grinder.range;
+
+            document.getElementById('grinder-clicks-main').textContent = `${minClicks}–${maxClicks} щелчков`;
+            document.getElementById('grinder-clicks-sub').textContent = `Оптимум: ${optimalClicks} щелчков (${grinder.note})`;
+            document.getElementById('grinder-optimal-num').textContent = optimalClicks;
+
+            // Рекомендация температуры воды
+            const tempEl = document.getElementById('water-temp-recommendation');
+            if (blendKey === 'blend_80_20') {
+                tempEl.innerHTML = `Заливайте <strong>горячую воду (75–80°C)</strong>: это раскроет сладость арабики и не даст горечи от 20% робусты.`;
+            } else if (blendKey === 'arabica_dark') {
+                tempEl.innerHTML = `Заливайте <strong>теплую воду (65–75°C)</strong>, чтобы избежать переэкстракции и резкой горечи темной обжарки.`;
+            } else if (blendKey === 'arabica_light') {
+                tempEl.innerHTML = `Заливайте <strong>крутой кипяток (90–95°C)</strong> в нижнюю чашу для полноценной экстракции светлого зерна.`;
+            } else {
+                tempEl.innerHTML = `Заливайте <strong>горячую воду (80–85°C)</strong> — оптимальный баланс для 100% арабики средней обжарки.`;
+            }
+        }
+
+        // Генерация пошагового руководства с точными цифрами
+        function renderProtocolSteps(yieldMl, totalDrinkVolume) {
+            const drink = DRINKS[state.selectedDrink];
+            const grinderKey = document.getElementById('grinder-select').value;
+            const grinderName = GRINDERS[grinderKey].name;
+            const optimalClicks = document.getElementById('grinder-optimal-num').textContent;
+
+            document.getElementById('protocol-badge').textContent = `${drink.name} • Итого ~${totalDrinkVolume} мл`;
+
+            const steps = [
+                {
+                    num: "01",
+                    title: "Взвешивание, RDT и Помол",
+                    desc: `Отмерьте <strong>${state.coffeeGrams} г</strong> кофе. Нанесите 1 каплю воды (техника RDT), встряхните зерна и смелите на <strong>${grinderName} (${optimalClicks} щелчков)</strong>.`
+                },
+                {
+                    num: "02",
+                    title: "Вода в нижнюю чашу (Бойлер)",
+                    desc: `Влейте ровно <strong>${state.waterMl} мл</strong> подогретой воды в нижнюю чашу Моки (${MOKA_SIZES[state.mokaSize].name}). Убедитесь, что уровень воды находится ниже клапана безопасности.`
+                },
+                {
+                    num: "03",
+                    title: "Заполнение воронки без темперовки",
+                    desc: `Засыпьте <strong>${state.coffeeGrams} г</strong> молотого кофе в воронку. Разровняйте легким постукиванием пальцем по бортику — <strong>не утрамбовывайте</strong> таблетку.`
+                },
+                {
+                    num: "04",
+                    title: "Контроль экстракции и стоп-тайминг",
+                    desc: `Поставьте на минимальный/средний огонь с открытой крышкой. Как только выйдет <strong>~${yieldMl} мл</strong> густого кофе и струя начнет светлеть — снимите с огня и охладите дно бойлера водой.`
+                }
+            ];
+
+            // 5-й шаг зависит от выбранного напитка (молоко / вода / чистый)
+            if (drink.modifierType === 'milk' && state.modifierMl > 0) {
+                const foamMl = Math.round(state.modifierMl * (drink.foamShare || 0.15));
+                steps.push({
+                    num: "05",
+                    title: `Сборка напитка «${drink.name}»`,
+                    desc: `Подогрейте до 60–65°C и взбейте <strong>${state.modifierMl} мл молока</strong> (включая ~${foamMl} мл шелковистой микропены). Влейте молоко в <strong>${yieldMl} мл</strong> приготовленной базы Мока-Эспрессо.`
+                });
+            } else if (drink.modifierType === 'water' && state.modifierMl > 0) {
+                steps.push({
+                    num: "05",
+                    title: `Приготовление «${drink.name}» (Bypass)`,
+                    desc: `В чашку с <strong>${yieldMl} мл</strong> концентрированной базы Моки аккуратно влейте <strong>${state.modifierMl} мл</strong> горячей воды (85–90°C).`
+                });
+            } else {
+                steps.push({
+                    num: "05",
+                    title: `Подача «${drink.name}»`,
+                    desc: `Перемешайте кофе в верхней чаше чайной ложкой для объединения плотных первых капель и крема, затем перелейте <strong>${yieldMl} мл</strong> в прогретую чашку.`
+                });
+            }
+
+            const container = document.getElementById('recipe-steps');
+            container.innerHTML = steps.map(s => `
+                <div class="flex items-start gap-3.5 p-3 rounded-xl bg-stone-50 dark:bg-espresso-950/50 border border-stone-200/80 dark:border-stone-800/80">
+                    <span class="font-mono font-bold text-xs px-2 py-1 rounded-lg bg-crema/20 text-crema-dark dark:text-crema border border-crema/30 shrink-0 mt-0.5">
+                        ${s.num}
+                    </span>
+                    <div>
+                        <div class="font-bold text-stone-800 dark:text-stone-100 text-xs sm:text-sm">${s.title}</div>
+                        <p class="text-xs text-stone-600 dark:text-stone-400 mt-0.5 leading-relaxed">${s.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==========================================
+        // 5. СОХРАНЕНИЕ ПРЕСЕТОВ И ЭКСПОРТ JSON (ДЛЯ GITHUB)
+        // ==========================================
+        function loadSavedPresets() {
+            try {
+                const raw = localStorage.getItem('mokalab_custom_presets');
+                if (raw) {
+                    state.savedPresets = JSON.parse(raw);
+                    renderSavedPresetsBar();
+                }
+            } catch (e) {
+                console.warn('Не удалось загрузить сохраненные пресеты:', e);
+            }
+        }
+
+        function saveCustomPreset() {
+            const drinkName = DRINKS[state.selectedDrink].name;
+            const preset = {
+                id: Date.now(),
+                title: `${drinkName} (${state.coffeeGrams}г / ${state.waterMl}мл${state.modifierMl ? ' + ' + state.modifierMl + 'мл' : ''})`,
+                selectedDrink: state.selectedDrink,
+                mokaSize: state.mokaSize,
+                coffeeGrams: state.coffeeGrams,
+                waterMl: state.waterMl,
+                modifierMl: state.modifierMl
+            };
+            state.savedPresets.unshift(preset);
+            if (state.savedPresets.length > 6) state.savedPresets.pop();
+
+            try {
+                localStorage.setItem('mokalab_custom_presets', JSON.stringify(state.savedPresets));
+            } catch (e) {}
+
+            renderSavedPresetsBar();
+            showToast("Рецепт сохранен в быстрые пресеты!");
+        }
+
+        function applySavedPreset(id) {
+            const found = state.savedPresets.find(p => p.id === id);
+            if (!found) return;
+            state.selectedDrink = found.selectedDrink;
+            state.mokaSize = found.mokaSize;
+            state.coffeeGrams = found.coffeeGrams;
+            state.waterMl = found.waterMl;
+            state.modifierMl = found.modifierMl;
+            renderDrinkSelector();
+            renderMokaSizeButtons();
+            updateUI();
+            showToast(`Загружен: ${found.title}`);
+        }
+
+        function deleteSavedPreset(id, event) {
+            event.stopPropagation();
+            state.savedPresets = state.savedPresets.filter(p => p.id !== id);
+            try {
+                localStorage.setItem('mokalab_custom_presets', JSON.stringify(state.savedPresets));
+            } catch (e) {}
+            renderSavedPresetsBar();
+        }
+
+        function renderSavedPresetsBar() {
+            const bar = document.getElementById('saved-presets-bar');
+            const list = document.getElementById('saved-presets-list');
+            if (!state.savedPresets.length) {
+                bar.classList.add('hidden');
+                return;
+            }
+            bar.classList.remove('hidden');
+            list.innerHTML = state.savedPresets.map(p => `
+                <div onclick="applySavedPreset(${p.id})" class="cursor-pointer px-2.5 py-1 rounded-lg text-xs font-mono bg-stone-200/80 dark:bg-stone-800 hover:bg-crema/20 border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition">
+                    <span>${p.title}</span>
+                    <button onclick="deleteSavedPreset(${p.id}, event)" class="text-stone-400 hover:text-rose-500">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Модальное окно JSON
+        function openJsonModal() {
+            const exportData = {
+                app: "MokaLab",
+                version: "1.0",
+                recipe: {
+                    drink: state.selectedDrink,
+                    mokaCups: state.mokaSize,
+                    coffeeGrams: state.coffeeGrams,
+                    boilerWaterMl: state.waterMl,
+                    expectedCoffeeYieldMl: calculateCoffeeYield(state.waterMl, state.coffeeGrams),
+                    addedMilkOrWaterMl: state.modifierMl,
+                    grinder: document.getElementById('grinder-select').value,
+                    blend: document.getElementById('blend-select').value
+                }
+            };
+            document.getElementById('json-textarea').value = JSON.stringify(exportData, null, 2);
+            document.getElementById('json-modal').classList.remove('hidden');
+        }
+
+        function closeJsonModal() {
+            document.getElementById('json-modal').classList.add('hidden');
+        }
+
+        function copyJsonConfig() {
+            const textarea = document.getElementById('json-textarea');
+            textarea.select();
+            document.execCommand('copy');
+            showToast("JSON скопирован в буфер обмена!");
+        }
+
+        function applyJsonConfig() {
+            try {
+                const raw = document.getElementById('json-textarea').value;
+                const parsed = JSON.parse(raw);
+                const r = parsed.recipe || parsed;
+
+                if (r.drink && DRINKS[r.drink]) state.selectedDrink = r.drink;
+                if (r.mokaCups && MOKA_SIZES[r.mokaCups]) state.mokaSize = r.mokaCups;
+                if (typeof r.coffeeGrams === 'number') state.coffeeGrams = r.coffeeGrams;
+                if (typeof r.boilerWaterMl === 'number') state.waterMl = r.boilerWaterMl;
+                if (typeof r.addedMilkOrWaterMl === 'number') state.modifierMl = r.addedMilkOrWaterMl;
+
+                renderDrinkSelector();
+                renderMokaSizeButtons();
+                updateUI();
+                closeJsonModal();
+                showToast("Конфигурация JSON успешно применена!");
+            } catch (err) {
+                showToast("Ошибка формата JSON. Проверьте синтаксис.");
+            }
+        }
+
+        // Переключение темы (Темная / Светлая)
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+        }
+
+        // Показ всплывающего уведомления
+        let toastTimer = null;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 2800);
+        }
+
+        // Запуск приложения при загрузке
+        window.onload = function () {
+            renderDrinkSelector();
+            renderMokaSizeButtons();
+            loadSavedPresets();
+            updateUI();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>

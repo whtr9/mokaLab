@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MokaLab — Интерактивный калькулятор и визуализатор рецептов для Моки</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --text-primary: #0f2942;
+            --text-muted: #4a6b82;
+            --aero-blue: #0288d1;
+            --aero-cyan: #00b0ff;
+            --aero-mint: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e0f7fa 0%, #b3e5fc 45%, #dcedc8 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Frutiger Aero Decorative Bokeh / Light Flares */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background-image:
+                radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 28%),
+                radial-gradient(circle at 85% 14%, rgba(129, 212, 250, 0.55) 0%, rgba(129, 212, 250, 0) 32%),
+                radial-gradient(circle at 78% 82%, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 26%),
+                radial-gradient(circle at 22% 78%, rgba(165, 214, 167, 0.45) 0%, rgba(165, 214, 167, 0) 30%),
+                radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 40%);
+        }
+
+        h1, h2, h3, .font-heading {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: var(--text-primary);
+        }
+
+        .font-mono-num {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Windows Aero Glass Card */
+        .brutal-card {
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0.45) 100%);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 
+                0 12px 32px rgba(14, 74, 117, 0.12),
+                inset 0 1px 1px rgba(255, 255, 255, 0.9);
+            position: relative;
+            z-index: 1;
+        }
+
+        .brutal-card-header {
+            border-radius: 20px 20px 0 0;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(240, 249, 255, 0.5));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            padding: 15px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        /* Aqua Gel Pill Buttons */
+        .cta-btn {
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+            background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 50%, #01579b 51%, #0277bd 100%);
+            border: 1px solid #01579b;
+            box-shadow: 
+                inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                0 4px 10px rgba(2, 136, 209, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .cta-btn:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+            box-shadow: 
+                inset 0 2px 4px rgba(255, 255, 255, 0.95),
+                0 6px 14px rgba(2, 136, 209, 0.42);
+        }
+
+        .cta-btn:active {
+            transform: translateY(0px);
+            filter: brightness(0.96);
+        }
+
+        .cta-btn-emerald {
+            background: linear-gradient(180deg, #6ee7b7 0%, #10b981 50%, #047857 51%, #059669 100%);
+            border: 1px solid #047857;
+            box-shadow: 
+                inset 0 2px 3px rgba(255, 255, 255, 0.85),
+                0 4px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Glossy Selector Tiles (Drinks & Moka Sizes) */
+        .tile-btn {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.55) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 14px;
+            color: var(--text-primary);
+            box-shadow: 
+                0 4px 12px rgba(14, 74, 117, 0.06),
+                inset 0 1px 1px rgba(255, 255, 255, 0.95);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .tile-btn:hover {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(225, 245, 254, 0.75) 100%);
+            border-color: #81d4fa;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(2, 136, 209, 0.14);
+        }
+
+        .tile-btn.active {
+            background: linear-gradient(180deg, rgba(225, 245, 254, 0.95) 0%, rgba(179, 229, 252, 0.85) 100%);
+            border: 2px solid #00b0ff;
+            box-shadow: 
+                0 6px 18px rgba(0, 176, 255, 0.24),
+                inset 0 1px 2px rgba(255, 255, 255, 0.95);
+        }
+
+        /* Frutiger Aero Glossy Range Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #b3e5fc 0%, #4fc3f7 55%, #0288d1 100%);
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 0 rgba(255, 255, 255, 0.8);
+            outline: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e1f5fe 35%, #29b6f6 80%, #0277bd 100%);
+            border: 2px solid #ffffff;
+            box-shadow: 
+                0 3px 8px rgba(2, 119, 189, 0.45),
+                inset 0 1px 2px rgba(255, 255, 255, 0.9);
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 176, 255, 0.65);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e1f5fe 35%, #29b6f6 80%, #0277bd 100%);
+            border: 2px solid #ffffff;
+            box-shadow: 0 3px 8px rgba(2, 119, 189, 0.45);
+            cursor: pointer;
+        }
+
+        /* Glass Inputs & Selects */
+        .terminal-input {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #b3e5fc;
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            padding: 7px 12px;
+            box-shadow: inset 0 1px 2px rgba(14, 74, 117, 0.06);
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .terminal-input:focus {
+            border-color: #00b0ff;
+            box-shadow: 0 0 0 3px rgba(0, 176, 255, 0.2);
+            background: #ffffff;
+        }
+
+        /* Smooth SVG Liquid Transitions */
+        .svg-liquid {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.55; transform: scale(0.92); }
+        }
+        .blink-pixel {
+            animation: pulseGlow 1.8s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-sky-200 selection:text-sky-950">
+
+    <!-- AERO GLASS TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 translate-y-28 opacity-0 transition-all duration-300 pointer-events-none brutal-card px-5 py-3.5 flex items-center gap-3">
+        <span class="w-3 h-3 rounded-full bg-sky-500 shadow-sm shadow-sky-400 inline-block blink-pixel"></span>
+        <span id="toast-msg" class="text-xs font-semibold text-[#0f2942]">Параметры успешно обновлены</span>
+    </div>
+
+    <!-- JSON CONFIG MODAL -->
+    <div id="json-modal" class="fixed inset-0 z-50 hidden bg-sky-950/35 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="brutal-card max-w-xl w-full">
+            <div class="brutal-card-header">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-7 h-7 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center text-sky-700">
+                        <i data-lucide="file-code-2" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-sm font-bold text-[#0f2942]">Конфигурация рецепта (JSON / GitHub)</span>
+                </div>
+                <button onclick="closeJsonModal()" class="cta-btn">Закрыть</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <p class="text-xs text-[#4a6b82] leading-relaxed">
+                    Скопируйте параметры текущих пропорций для сохранения в репозитории GitHub или вставьте JSON-код для быстрой загрузки рецепта:
+                </p>
+                <textarea id="json-textarea" rows="9" class="w-full terminal-input text-xs font-mono-num text-sky-900"></textarea>
+                <div class="flex flex-wrap justify-end gap-3 pt-3 border-t border-white/70">
+                    <button onclick="copyJsonConfig()" class="cta-btn">Скопировать JSON</button>
+                    <button onclick="applyJsonConfig()" class="cta-btn cta-btn-emerald">Загрузить в систему</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="border-b border-white/70 bg-white/55 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <!-- Top utility bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-sky-900/10">
+                <div class="flex items-center gap-2.5">
+                    <span class="px-3 py-1 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 text-white font-bold text-xs shadow-sm">
+                        MokaLab Aero 2.5
+                    </span>
+                    <span class="text-xs font-medium text-[#4a6b82] hidden md:inline">
+                        Интерактивная лаборатория пропорций гейзерной кофеварки
+                    </span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button onclick="saveCustomPreset()" class="cta-btn">+ Сохранить пресет</button>
+                    <button onclick="openJsonModal()" class="cta-btn">JSON / GitHub</button>
+                </div>
+            </div>
+
+            <!-- Main Heading -->
+            <div class="pt-4 pb-1 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-400 via-sky-500 to-emerald-400 p-0.5 shadow-md shadow-sky-500/20 shrink-0">
+                        <div class="w-full h-full bg-white/90 rounded-[14px] flex items-center justify-center text-sky-600">
+                            <i data-lucide="coffee" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-[#0f2942]">
+                            MokaLab Studio
+                        </h1>
+                        <p class="text-xs sm:text-sm text-[#4a6b82]">
+                            Визуальный расчет воды в бойлере, закладки кофе и молока на основе размеров Bialetti
+                        </p>
+                    </div>
+                </div>
+                <div class="self-start lg:self-center px-4 py-2 rounded-full bg-white/75 border border-white/90 shadow-sm flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-xs font-semibold text-sky-900 font-mono-num">
+                        Эталон: 2 чашки (12 г кофе : 70 мл воды)
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8 flex-1 w-full relative z-10">
+
+        <!-- SECTION 01: DRINK MATRIX -->
+        <section class="brutal-card">
+            <div class="brutal-card-header flex-wrap">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                        <i data-lucide="cup-soda" class="w-4 h-4"></i>
+                    </div>
+                    <h2 class="text-sm sm:text-base font-bold">1. Выберите кофейный напиток</h2>
+                </div>
+                <span class="px-3 py-1 rounded-full bg-sky-100/80 border border-sky-200/80 text-xs font-medium text-sky-800">
+                    Протокол экстракции и подачи
+                </span>
+            </div>
+
+            <div class="p-5 sm:p-6">
+                <!-- 5 drinks grid (Latte removed) -->
+                <div id="drink-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Saved user presets bar -->
+                <div id="saved-presets-bar" class="hidden mt-5 pt-4 border-t border-white/70 flex flex-wrap items-center gap-2.5">
+                    <span class="text-xs font-semibold text-sky-800 mr-1 flex items-center gap-1.5">
+                        <i data-lucide="bookmark" class="w-3.5 h-3.5"></i> Сохраненные рецепты:
+                    </span>
+                    <div id="saved-presets-list" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLEAN SYMMETRICAL 12-COLUMN DESKTOP GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+            <!-- LEFT COLUMN (5 COLS): MOKA POT PARAMETERS & GRINDER -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- CARD A: MOKA POT SIZE & WATER/COFFEE SLIDERS -->
+                <div class="brutal-card">
+                    <div class="brutal-card-header">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                                <i data-lucide="sliders" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm sm:text-base font-bold text-[#0f2942]">2. Параметры Моки и базы</span>
+                        </div>
+                        <button onclick="resetToDrinkDefault()" class="cta-btn">Сброс</button>
+                    </div>
+
+                    <div class="p-5 sm:p-6 space-y-6">
+                        <!-- Bialetti Size Selector (Only 1, 2, 3, 4, 6, 9 cups) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold text-[#0f2942]">Размер гейзерной кофеварки Bialetti</span>
+                                <span class="px-2.5 py-0.5 rounded-full bg-white/80 border border-sky-200 text-[11px] font-semibold text-sky-700">
+                                    6 моделей
+                                </span>
+                            </div>
+                            <div id="moka-size-buttons" class="grid grid-cols-3 sm:grid-cols-6 lg:grid-cols-3 gap-2.5">
+                                <!-- Generated by JS: 1, 2, 3, 4, 6, 9 cups -->
+                            </div>
+                            <!-- Technical Dimensions Readout (strictly metric cm & ml) -->
+                            <div class="mt-3.5 p-3 bg-white/65 border border-white/90 rounded-xl shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+                                <span id="moka-dimensions-badge" class="text-[#4a6b82] font-medium">Габариты: высота 14.5 см • дно 8.0 см</span>
+                                <span id="moka-max-info" class="text-sky-800 font-bold font-mono-num">Бойлер: 90 мл | Корзина: ~13 г</span>
+                            </div>
+                        </div>
+
+                        <!-- SLIDER 1: COFFEE DOSE (G) -->
+                        <div class="p-4 bg-white/60 border border-white/85 rounded-2xl shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label for="coffee-slider" class="text-xs font-bold text-[#0f2942] flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-700 inline-block"></span>
+                                    Закладка молотого кофе (г)
+                                </label>
+                                <div class="flex items-center gap-1.5">
+                                    <input id="coffee-input" type="number" step="0.5" min="4" max="55"
+                                        class="w-20 text-right font-bold text-xs font-mono-num terminal-input"
+                                        oninput="handleCoffeeChange(this.value)">
+                                    <span class="text-xs font-bold text-amber-800">г</span>
+                                </div>
+                            </div>
+                            <input id="coffee-slider" type="range" step="0.5" min="4" max="50"
+                                oninput="handleCoffeeChange(this.value)">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs pt-1">
+                                <span id="basket-fill-status" class="text-[#4a6b82] font-medium">Заполнение воронки: 92%</span>
+                                <button onclick="setStandard2CupPreset()" class="cta-btn">Эталон 2 чашки: 12г / 70мл</button>
+                            </div>
+                        </div>
+
+                        <!-- BREW RATIO LOCK BAR -->
+                        <div class="p-3.5 bg-sky-50/80 border border-sky-200/80 rounded-2xl flex items-center justify-between shadow-sm">
+                            <div>
+                                <span class="text-xs text-[#4a6b82] block font-medium">Коэффициент заваривания (Brew Ratio)</span>
+                                <span id="brew-ratio-badge" class="text-base font-extrabold text-sky-700 font-mono-num">1 : 5.8</span>
+                            </div>
+                            <button id="lock-ratio-btn" onclick="toggleRatioLock()" class="cta-btn">
+                                Пропорция: Свободно
+                            </button>
+                        </div>
+
+                        <!-- SLIDER 2: WATER IN LOWER CHAMBER (ML) -->
+                        <div class="p-4 bg-white/60 border border-white/85 rounded-2xl shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label for="water-slider" class="text-xs font-bold text-[#0f2942] flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+                                    Вода в нижнюю чашу (мл)
+                                </label>
+                                <div class="flex items-center gap-1.5">
+                                    <input id="water-input" type="number" step="1" min="20" max="500"
+                                        class="w-20 text-right font-bold text-xs font-mono-num terminal-input"
+                                        oninput="handleWaterChange(this.value)">
+                                    <span class="text-xs font-bold text-sky-700">мл</span>
+                                </div>
+                            </div>
+                            <input id="water-slider" type="range" step="1" min="20" max="450"
+                                oninput="handleWaterChange(this.value)">
+                            <div class="flex items-center justify-between text-xs pt-1">
+                                <span id="water-valve-status" class="text-sky-700 font-semibold">78% от уровня клапана</span>
+                                <span id="valve-limit-label" class="text-[#4a6b82] font-medium">Лимит клапана: 90 мл</span>
+                            </div>
+                        </div>
+
+                        <!-- SLIDER 3: MILK / HOT WATER MODIFIER (ML) -->
+                        <div id="modifier-control-box" class="p-4 bg-white/60 border border-white/85 rounded-2xl shadow-sm space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label for="milk-slider" class="text-xs font-bold text-[#0f2942] flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-200 border border-amber-500 inline-block"></span>
+                                    <span id="modifier-label">Молоко / Вода в чашку (мл)</span>
+                                </label>
+                                <div class="flex items-center gap-1.5">
+                                    <input id="milk-input" type="number" step="5" min="0" max="1000"
+                                        class="w-20 text-right font-bold text-xs font-mono-num terminal-input"
+                                        oninput="handleModifierChange(this.value)">
+                                    <span class="text-xs font-bold text-sky-700">мл</span>
+                                </div>
+                            </div>
+                            <input id="milk-slider" type="range" step="5" min="0" max="600"
+                                oninput="handleModifierChange(this.value)">
+                            <div class="flex flex-wrap items-center justify-between gap-2 text-xs pt-1">
+                                <span id="modifier-ratio-hint" class="text-[#4a6b82] font-medium">Для эспрессо добавки: 0 мл</span>
+                                <button onclick="autoSyncModifier()" class="cta-btn">Авто-расчет</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD B: GRINDER & PREP (Strictly no RDT and no starting water temp) -->
+                <div class="brutal-card">
+                    <div class="brutal-card-header">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                                <i data-lucide="settings" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm sm:text-base font-bold text-[#0f2942]">3. Кофемолка и подготовка</span>
+                        </div>
+                        <span class="px-3 py-1 rounded-full bg-amber-100/80 border border-amber-300/80 text-xs font-semibold text-amber-900">
+                            Помол
+                        </span>
+                    </div>
+
+                    <div class="p-5 sm:p-6 space-y-5">
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label for="grinder-select" class="block text-xs font-semibold text-[#4a6b82] mb-1.5">Модель кофемолки</label>
+                                <select id="grinder-select" onchange="updateUI()" class="w-full text-xs font-semibold terminal-input">
+                                    <option value="timemore_c3">Timemore Chestnut C3 / C3S Pro</option>
+                                    <option value="comandante">Comandante C40 (MK3 / MK4)</option>
+                                    <option value="1zpresso_q2">1Zpresso Q2 / JX</option>
+                                    <option value="kingrinder_k6">KINGrinder K6</option>
+                                    <option value="generic_burr">Универсальная жерновая (шкала 1–30)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="blend-select" class="block text-xs font-semibold text-[#4a6b82] mb-1.5">Состав бленда и степень обжарки</label>
+                                <select id="blend-select" onchange="updateUI()" class="w-full text-xs font-semibold terminal-input">
+                                    <option value="blend_80_20">Эспрессо-бленд (80% Арабика / 20% Робуста)</option>
+                                    <option value="arabica_med">100% Арабика — Средняя обжарка</option>
+                                    <option value="arabica_dark">Традиционная темная обжарка</option>
+                                    <option value="arabica_light">Светлая обжарка (Омни / Фильтр)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Clicks Readout Display -->
+                        <div class="p-4 bg-gradient-to-br from-white/85 to-sky-50/85 border border-white rounded-2xl shadow-sm flex items-center justify-between gap-4">
+                            <div class="space-y-1">
+                                <div class="text-xs font-medium text-[#4a6b82]">Рекомендуемый диапазон жерновов</div>
+                                <div id="grinder-clicks-main" class="font-heading text-lg sm:text-xl font-extrabold text-sky-700">
+                                    14–16 щелчков
+                                </div>
+                                <div id="grinder-clicks-sub" class="text-xs text-[#0f2942] font-medium">
+                                    Оптимум: 15 кликов • Фракция мелкого песка
+                                </div>
+                            </div>
+                            <div class="rounded-2xl bg-gradient-to-b from-sky-400 to-sky-600 text-white px-4 py-3 text-center shadow-md shadow-sky-500/25 shrink-0 border border-sky-300">
+                                <div id="grinder-optimal-num" class="font-mono-num text-2xl font-extrabold">15</div>
+                                <div class="text-[10px] font-semibold opacity-90">кликов</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN (7 COLS): REALISTIC SKEUOMORPHIC CROSS-SECTION & PROTOCOL -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- CARD C: INTERACTIVE CROSS-SECTION (MOKA POT + FINAL CUP) -->
+                <div class="brutal-card">
+                    <div class="brutal-card-header flex-wrap">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm sm:text-base font-bold text-[#0f2942]">4. Визуальный разрез: Мока и Чашка</span>
+                        </div>
+                        <div id="safety-badge" class="px-3.5 py-1 border border-emerald-400 bg-emerald-100/90 text-emerald-800 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block blink-pixel"></span>
+                            Клапан открыт (Норма)
+                        </div>
+                    </div>
+
+                    <div class="p-5 sm:p-6 space-y-6">
+                        <!-- Dual Realistic Schematic Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gradient-to-b from-white/75 to-sky-50/65 border border-white/90 rounded-2xl p-4 sm:p-6 shadow-inner">
+
+                            <!-- LEFT SCHEMATIC: REALISTIC MOKA POT CROSS-SECTION -->
+                            <div class="flex flex-col items-center border-b md:border-b-0 md:border-r border-sky-900/10 pb-6 md:pb-0 md:pr-4">
+                                <div class="w-full flex items-center justify-between text-xs mb-3">
+                                    <span id="moka-svg-title" class="text-[#0f2942] font-bold">Мока: 2 чашки (90 мл)</span>
+                                    <span class="px-2.5 py-0.5 rounded-full bg-sky-100 text-sky-700 font-semibold text-[11px]">Разрез А</span>
+                                </div>
+
+                                <div class="relative w-full max-w-[270px] aspect-[3/4] flex items-center justify-center">
+                                    <svg viewBox="0 0 260 350" class="w-full h-full drop-shadow-md">
+                                        <defs>
+                                            <!-- Realistic Polished Silver Aluminum Metallic Gradient -->
+                                            <linearGradient id="silverMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#d7dde2" />
+                                                <stop offset="22%" stop-color="#f8fafc" />
+                                                <stop offset="48%" stop-color="#9aa5b1" />
+                                                <stop offset="76%" stop-color="#e2e8f0" />
+                                                <stop offset="100%" stop-color="#7b8794" />
+                                            </linearGradient>
+
+                                            <!-- Darker Brushed Steel for Internal Column & Funnel -->
+                                            <linearGradient id="brushedSteel" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#cbd5e1" />
+                                                <stop offset="50%" stop-color="#f1f5f9" />
+                                                <stop offset="100%" stop-color="#94a3b8" />
+                                            </linearGradient>
+
+                                            <!-- Glossy Bakelite Handle & Knob Gradient -->
+                                            <linearGradient id="bakeliteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#475569" />
+                                                <stop offset="40%" stop-color="#1e293b" />
+                                                <stop offset="100%" stop-color="#0f172a" />
+                                            </linearGradient>
+
+                                            <!-- Brass Safety Valve Gradient -->
+                                            <linearGradient id="brassValve" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" stop-color="#fef08a" />
+                                                <stop offset="50%" stop-color="#eab308" />
+                                                <stop offset="100%" stop-color="#a16207" />
+                                            </linearGradient>
+
+                                            <!-- Natural Espresso Liquid Gradient -->
+                                            <linearGradient id="realCoffeeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#4e2a14" />
+                                                <stop offset="55%" stop-color="#361a0a" />
+                                                <stop offset="100%" stop-color="#261206" />
+                                            </linearGradient>
+
+                                            <!-- Frutiger Aero Crystal Aqua Water Gradient -->
+                                            <linearGradient id="aeroWaterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="rgba(56, 189, 248, 0.48)" />
+                                                <stop offset="50%" stop-color="rgba(14, 165, 233, 0.65)" />
+                                                <stop offset="100%" stop-color="rgba(2, 132, 199, 0.82)" />
+                                            </linearGradient>
+
+                                            <!-- Roasted Coffee Grounds Texture Hatch -->
+                                            <pattern id="groundsHatch" width="6" height="6" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+                                                <line x1="0" y1="0" x2="0" y2="6" stroke="#2e190c" stroke-width="2" stroke-opacity="0.75" />
+                                            </pattern>
+
+                                            <!-- ClipPath for Lower Boiler -->
+                                            <clipPath id="boilerClip">
+                                                <polygon points="62,215 198,215 214,322 46,322" />
+                                            </clipPath>
+                                            <!-- ClipPath for Funnel Basket -->
+                                            <clipPath id="basketClip">
+                                                <polygon points="88,182 172,182 164,225 96,225" />
+                                            </clipPath>
+                                            <!-- ClipPath for Upper Collector -->
+                                            <clipPath id="upperChamberClip">
+                                                <polygon points="52,55 208,55 192,168 68,168" />
+                                            </clipPath>
+                                        </defs>
+
+                                        <!-- Glossy Black Bakelite Handle & Lid Knob -->
+                                        <path d="M 205,72 L 238,72 L 238,155 L 198,150" fill="none" stroke="url(#bakeliteGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M 207,70 L 236,70" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+                                        <polygon points="48,52 212,52 195,35 65,35" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5"/>
+                                        <polygon points="116,19 144,19 138,35 122,35" fill="url(#bakeliteGrad)" stroke="#334155" stroke-width="1.5" />
+
+                                        <!-- UPPER CHAMBER (Polished Silver Aluminum) -->
+                                        <polygon points="50,54 210,54 194,170 66,170" fill="url(#silverMetal)" stroke="#64748b" stroke-width="2" />
+                                        <!-- Interior recess of Upper Chamber -->
+                                        <polygon points="54,56 206,56 191,168 69,168" fill="#f8fafc" fill-opacity="0.45" />
+
+                                        <!-- Extracted Coffee in Upper Chamber (Rich Brown + Golden Crema) -->
+                                        <g clip-path="url(#upperChamberClip)">
+                                            <rect id="svg-upper-coffee" class="svg-liquid" x="45" y="135" width="170" height="40" fill="url(#realCoffeeGrad)" fill-opacity="0.92" />
+                                            <rect id="svg-upper-crema" class="svg-liquid" x="45" y="131" width="170" height="4" fill="#d49b54" />
+                                        </g>
+
+                                        <!-- Central Chimney Column -->
+                                        <polygon points="122,78 138,78 143,170 117,170" fill="url(#brushedSteel)" stroke="#64748b" stroke-width="1.5" />
+                                        <polygon points="114,78 146,78 138,70 122,70" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
+
+                                        <!-- Caramel-Coffee Extraction Streams -->
+                                        <path d="M 116,80 L 102,95 L 102,135" fill="none" stroke="#8c4a27" stroke-width="2" stroke-dasharray="3 3" />
+                                        <path d="M 144,80 L 158,95 L 158,135" fill="none" stroke="#8c4a27" stroke-width="2" stroke-dasharray="3 3" />
+
+                                        <!-- Upper Yield Readout Tag -->
+                                        <rect x="60" y="98" width="140" height="23" rx="6" fill="rgba(255, 255, 255, 0.92)" stroke="#cbd5e1" stroke-width="1" />
+                                        <text id="svg-yield-text" x="130" y="113" text-anchor="middle" fill="#361a0a" font-family="JetBrains Mono" font-size="10.5" font-weight="bold">
+                                            Выход базы: ~47 мл
+                                        </text>
+
+                                        <!-- Silicone Gasket Ring -->
+                                        <rect x="64" y="170" width="132" height="11" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5" />
+
+                                        <!-- LOWER CHAMBER / BOILER (Polished Silver Aluminum) -->
+                                        <polygon points="60,212 200,212 216,324 44,324" fill="url(#silverMetal)" stroke="#64748b" stroke-width="2" />
+                                        <polygon points="66,181 194,181 200,212 60,212" fill="url(#brushedSteel)" stroke="#64748b" stroke-width="1.5" />
+
+                                        <!-- Frutiger Aero Crystal Blue Boiler Water Level -->
+                                        <g clip-path="url(#boilerClip)">
+                                            <rect id="svg-boiler-water" class="svg-liquid" x="40" y="250" width="180" height="75" fill="url(#aeroWaterGrad)" />
+                                            <line id="svg-boiler-water-line" x1="40" y1="250" x2="220" y2="250" stroke="#0284c7" stroke-width="2.5" />
+                                        </g>
+
+                                        <!-- Metal Funnel Stem & Basket -->
+                                        <polygon points="125,225 135,225 133,314 127,314" fill="url(#brushedSteel)" stroke="#64748b" stroke-width="1.5" />
+                                        <polygon points="86,181 174,181 165,226 95,226" fill="#f8fafc" stroke="#64748b" stroke-width="1.5" />
+
+                                        <!-- Dark Roasted Coffee Grounds inside Basket -->
+                                        <g clip-path="url(#basketClip)">
+                                            <rect id="svg-coffee-grounds-solid" class="svg-liquid" x="84" y="186" width="92" height="40" fill="#4a2c18" fill-opacity="0.88" />
+                                            <rect id="svg-coffee-grounds" class="svg-liquid" x="84" y="186" width="92" height="40" fill="url(#groundsHatch)" />
+                                        </g>
+
+                                        <!-- Coffee Dose Tag -->
+                                        <rect x="86" y="193" width="88" height="20" rx="6" fill="rgba(255, 255, 255, 0.94)" stroke="#d97706" stroke-width="1" />
+                                        <text id="svg-coffee-text" x="130" y="206" text-anchor="middle" fill="#4a2c18" font-family="JetBrains Mono" font-size="10" font-weight="bold">
+                                            12.0 г кофе
+                                        </text>
+
+                                        <!-- Brass Safety Valve Line & Icon -->
+                                        <line x1="48" y1="228" x2="212" y2="228" stroke="#d97706" stroke-width="1.2" stroke-dasharray="4 3" />
+                                        <rect id="svg-valve-icon" x="51" y="222" width="13" height="11" rx="2" fill="url(#brassValve)" stroke="#92400e" stroke-width="1" />
+                                        <text x="68" y="237" fill="#92400e" font-family="Inter" font-size="8.5" font-weight="bold">
+                                            Клапан (MAX)
+                                        </text>
+
+                                        <!-- Boiler Water Readout Tag -->
+                                        <rect x="66" y="275" width="128" height="23" rx="6" fill="rgba(255, 255, 255, 0.92)" stroke="#38bdf8" stroke-width="1" />
+                                        <text id="svg-water-text" x="130" y="290" text-anchor="middle" fill="#0369a1" font-family="JetBrains Mono" font-size="11" font-weight="bold">
+                                            70 мл воды
+                                        </text>
+
+                                        <!-- Dimension Lines (Strictly in cm) -->
+                                        <line x1="22" y1="20" x2="22" y2="324" stroke="#64748b" stroke-width="1" stroke-dasharray="2 2" />
+                                        <line x1="17" y1="20" x2="27" y2="20" stroke="#0284c7" stroke-width="1.5" />
+                                        <line x1="17" y1="324" x2="27" y2="324" stroke="#0284c7" stroke-width="1.5" />
+                                        <g transform="translate(15, 172) rotate(-90)">
+                                            <rect x="-36" y="-11" width="72" height="16" rx="4" fill="rgba(255,255,255,0.9)" />
+                                            <text id="svg-height-cm" x="0" y="1" text-anchor="middle" fill="#0f2942" font-family="JetBrains Mono" font-size="9" font-weight="bold">
+                                                14.5 см
+                                            </text>
+                                        </g>
+
+                                        <line x1="44" y1="342" x2="216" y2="342" stroke="#64748b" stroke-width="1" stroke-dasharray="2 2" />
+                                        <line x1="44" y1="337" x2="44" y2="347" stroke="#0284c7" stroke-width="1.5" />
+                                        <line x1="216" y1="337" x2="216" y2="347" stroke="#0284c7" stroke-width="1.5" />
+                                        <rect x="80" y="332" width="100" height="16" rx="4" fill="rgba(255,255,255,0.9)" />
+                                        <text id="svg-width-cm" x="130" y="343" text-anchor="middle" fill="#0f2942" font-family="JetBrains Mono" font-size="9" font-weight="bold">
+                                            Дно: 8.0 см
+                                        </text>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT SCHEMATIC: GLASS/CERAMIC FINAL DRINK CUP -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-full flex items-center justify-between text-xs mb-3">
+                                    <span id="cup-svg-title" class="text-[#0f2942] font-bold">Чашка: Эспрессо (Мока)</span>
+                                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold text-[11px]">Разрез Б</span>
+                                </div>
+
+                                <div class="relative w-full max-w-[270px] aspect-[3/4] flex items-center justify-center">
+                                    <svg viewBox="0 0 260 350" class="w-full h-full drop-shadow-md">
+                                        <defs>
+                                            <clipPath id="cupInnerClip">
+                                                <polygon points="50,76 210,76 190,306 70,306" />
+                                            </clipPath>
+                                            <!-- Creamy Steamed Milk Texture Dots -->
+                                            <pattern id="milkDots" width="8" height="8" patternUnits="userSpaceOnUse">
+                                                <circle cx="2" cy="2" r="1.2" fill="#e6dec8" fill-opacity="0.7" />
+                                            </pattern>
+                                            <linearGradient id="glassCupSheen" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="rgba(255,255,255,0.65)" />
+                                                <stop offset="20%" stop-color="rgba(255,255,255,0.25)" />
+                                                <stop offset="85%" stop-color="rgba(224,242,254,0.35)" />
+                                                <stop offset="100%" stop-color="rgba(255,255,255,0.75)" />
+                                            </linearGradient>
+                                        </defs>
+
+                                        <!-- Glass/Ceramic Cup Handle -->
+                                        <path d="M 203,112 C 242,112 242,210 195,210" fill="none" stroke="#94a3b8" stroke-width="6" stroke-linecap="round" />
+                                        <path d="M 203,112 C 239,112 239,210 195,210" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+
+                                        <!-- Cup Interior Glass Background -->
+                                        <polygon points="50,76 210,76 190,306 70,306" fill="rgba(255, 255, 255, 0.55)" />
+
+                                        <!-- Drink Layers Inside Cup -->
+                                        <g clip-path="url(#cupInnerClip)">
+                                            <!-- Layer 3: Pure White Microfoam (Top) -->
+                                            <rect id="cup-layer-foam" class="svg-liquid" x="40" y="200" width="180" height="0" fill="#ffffff" fill-opacity="0.96" />
+                                            
+                                            <!-- Layer 2: Warm Creamy Milk or Hot Water (Middle) -->
+                                            <rect id="cup-layer-modifier-bg" class="svg-liquid" x="40" y="200" width="180" height="0" fill="#fffdf7" fill-opacity="0.92" />
+                                            <rect id="cup-layer-modifier" class="svg-liquid" x="40" y="200" width="180" height="0" fill="url(#milkDots)" />
+
+                                            <!-- Layer 1: Rich Espresso Moka Coffee Base (Bottom) -->
+                                            <rect id="cup-layer-coffee" class="svg-liquid" x="40" y="230" width="180" height="80" fill="url(#realCoffeeGrad)" fill-opacity="0.94" />
+                                            <!-- Caramel-Hazelnut Crema Layer (4px) -->
+                                            <rect id="cup-layer-crema" class="svg-liquid" x="40" y="226" width="180" height="4" fill="#d49b54" />
+                                        </g>
+
+                                        <!-- Glossy Glass Reflection Overlay -->
+                                        <polygon points="50,76 210,76 190,306 70,306" fill="url(#glassCupSheen)" pointer-events="none" />
+
+                                        <!-- Cup Outer Ceramic/Glass Contour -->
+                                        <polygon points="50,76 210,76 190,306 70,306" fill="none" stroke="#94a3b8" stroke-width="2.5" stroke-linejoin="round" />
+
+                                        <!-- Saucer Line -->
+                                        <line x1="36" y1="316" x2="224" y2="316" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" />
+
+                                        <!-- Layer Callout Labels (Rounded White Badges) -->
+                                        <g id="cup-label-foam-group" opacity="0">
+                                            <rect x="64" y="92" width="132" height="22" rx="6" fill="rgba(255, 255, 255, 0.94)" stroke="#cbd5e1" stroke-width="1" />
+                                            <text id="cup-label-foam" x="130" y="107" text-anchor="middle" fill="#0f2942" font-family="JetBrains Mono" font-size="9.5" font-weight="bold">
+                                                Микропена: ~15 мл
+                                            </text>
+                                        </g>
+
+                                        <g id="cup-label-modifier-group" opacity="0">
+                                            <rect x="56" y="156" width="148" height="23" rx="6" fill="rgba(255, 255, 255, 0.94)" stroke="#94a3b8" stroke-width="1" />
+                                            <text id="cup-label-modifier" x="130" y="171" text-anchor="middle" fill="#0f2942" font-family="JetBrains Mono" font-size="10" font-weight="bold">
+                                                Молоко: +100 мл
+                                            </text>
+                                        </g>
+
+                                        <g id="cup-label-coffee-group">
+                                            <rect x="58" y="255" width="144" height="23" rx="6" fill="rgba(255, 255, 255, 0.94)" stroke="#d49b54" stroke-width="1.2" />
+                                            <text id="cup-label-coffee" x="130" y="270" text-anchor="middle" fill="#361a0a" font-family="JetBrains Mono" font-size="10" font-weight="bold">
+                                                Мока-база: 47 мл
+                                            </text>
+                                        </g>
+
+                                        <!-- Total Cup Volume Header Pill -->
+                                        <rect x="56" y="32" width="148" height="28" rx="14" fill="#0288d1" />
+                                        <text id="cup-total-volume" x="130" y="50" text-anchor="middle" fill="#ffffff" font-family="JetBrains Mono" font-size="11.5" font-weight="bold">
+                                            Итого: 47 мл
+                                        </text>
+                                    </svg>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- 4 TELEMETRY READOUT BLOCKS -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                            <div class="p-3.5 bg-white/65 border border-white/90 rounded-2xl shadow-sm">
+                                <div class="text-xs text-[#4a6b82] font-medium">Кофе в воронке</div>
+                                <div id="stat-dose" class="text-lg sm:text-xl font-extrabold text-amber-900 font-mono-num mt-1">12.0 г</div>
+                            </div>
+                            <div class="p-3.5 bg-white/65 border border-white/90 rounded-2xl shadow-sm">
+                                <div class="text-xs text-[#4a6b82] font-medium">Вода в бойлере</div>
+                                <div id="stat-water" class="text-lg sm:text-xl font-extrabold text-sky-700 font-mono-num mt-1">70 мл</div>
+                            </div>
+                            <div class="p-3.5 bg-white/65 border border-white/90 rounded-2xl shadow-sm">
+                                <div class="text-xs text-[#4a6b82] font-medium">Выход экстракта</div>
+                                <div id="stat-yield" class="text-lg sm:text-xl font-extrabold text-[#0f2942] font-mono-num mt-1">~47 мл</div>
+                            </div>
+                            <div class="p-3.5 bg-white/65 border border-white/90 rounded-2xl shadow-sm">
+                                <div class="text-xs text-[#4a6b82] font-medium">Добавка в чашку</div>
+                                <div id="stat-modifier" class="text-lg sm:text-xl font-extrabold text-emerald-700 font-mono-num mt-1">0 мл</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD D: STEP-BY-STEP BREWING PROTOCOL -->
+                <div class="brutal-card">
+                    <div class="brutal-card-header flex-wrap">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-600 shrink-0">
+                                <i data-lucide="list-checks" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-sm sm:text-base font-bold text-[#0f2942]">5. Пошаговый рецепт приготовления</span>
+                        </div>
+                        <span id="protocol-badge" class="px-3.5 py-1 rounded-full bg-sky-100/90 border border-sky-200 text-xs text-sky-900 font-bold">
+                            Эспрессо (Мока)
+                        </span>
+                    </div>
+
+                    <div id="recipe-steps" class="p-5 sm:p-6 space-y-3">
+                        <!-- Dynamically populated by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/70 bg-white/50 backdrop-blur-md mt-12 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#4a6b82]">
+            <div class="flex items-center gap-2.5 font-medium">
+                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                <span>MokaLab — Frutiger Aero Glass Edition • Готово для GitHub Pages</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-4">
+                <span>Удержание воды кофейной таблеткой: ~1.9 мл/г</span>
+                <button onclick="openJsonModal()" class="cta-btn">Экспорт JSON</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- APPLICATION LOGIC (ALL DATA STRUCTURES, MATH & HANDLERS PRESERVED) -->
+    <script>
+        // =========================================================================
+        // 1. BIALETTI MOKA EXPRESS SIZES (STRICTLY 6 SIZES: 1, 2, 3, 4, 6, 9 CUPS)
+        // Strictly metric (ml, cm, g). Standard for 2-cup is 12.0 g coffee and 70 ml water.
+        // =========================================================================
+        const MOKA_SIZES = {
+            1: { cups: 1, name: "1 чашка", maxWater: 60,  heightCm: 13.5, baseWidthCm: 7.0,  maxCoffee: 8,  defaultEspressoCoffee: 8.0,  defaultEspressoWater: 47 },
+            2: { cups: 2, name: "2 чашки", maxWater: 90,  heightCm: 14.5, baseWidthCm: 8.0,  maxCoffee: 13, defaultEspressoCoffee: 12.0, defaultEspressoWater: 70 },
+            3: { cups: 3, name: "3 чашки", maxWater: 130, heightCm: 16.0, baseWidthCm: 9.0,  maxCoffee: 17, defaultEspressoCoffee: 15.5, defaultEspressoWater: 90 },
+            4: { cups: 4, name: "4 чашки", maxWater: 185, heightCm: 18.0, baseWidthCm: 9.5,  maxCoffee: 22, defaultEspressoCoffee: 21.0, defaultEspressoWater: 122 },
+            6: { cups: 6, name: "6 чашек", maxWater: 250, heightCm: 21.5, baseWidthCm: 11.0, maxCoffee: 28, defaultEspressoCoffee: 27.0, defaultEspressoWater: 158 },
+            9: { cups: 9, name: "9 чашек", maxWater: 410, heightCm: 25.0, baseWidthCm: 11.5, maxCoffee: 42, defaultEspressoCoffee: 41.0, defaultEspressoWater: 240 }
+        };
+
+        // =========================================================================
+        // 2. DRINKS CATALOG (LATTE STRICTLY REMOVED)
+        // =========================================================================
+        const DRINKS = {
+            espresso: {
+                id: 'espresso',
+                name: 'Эспрессо (Мока)',
+                shortDesc: 'Плотный концентрат • 12 г на 70 мл',
+                code: 'База',
+                modifierType: 'none',
+                modifierRatio: 0,
+                foamShare: 0
+            },
+            flatwhite: {
+                id: 'flatwhite',
+                name: 'Флэт Уайт',
+                shortDesc: 'База + молоко (1:2.4) и микропена',
+                code: 'Молочный',
+                modifierType: 'milk',
+                modifierRatio: 2.4,
+                foamShare: 0.15
+            },
+            cappuccino: {
+                id: 'cappuccino',
+                name: 'Капучино',
+                shortDesc: 'База + молоко и пышная пена',
+                code: 'Классика',
+                modifierType: 'milk',
+                modifierRatio: 3.0,
+                foamShare: 0.32
+            },
+            cortado: {
+                id: 'cortado',
+                name: 'Кортадо',
+                shortDesc: 'Баланс 1:1 теплого молока и кофе',
+                code: 'Баланс 1:1',
+                modifierType: 'milk',
+                modifierRatio: 1.0,
+                foamShare: 0.10
+            },
+            americano: {
+                id: 'americano',
+                name: 'Американо',
+                shortDesc: 'Мока-база + горячая вода (1:2.2)',
+                code: 'Черный',
+                modifierType: 'water',
+                modifierRatio: 2.2,
+                foamShare: 0
+            }
+        };
+
+        // =========================================================================
+        // 3. GRINDER PROFILES
+        // =========================================================================
+        const GRINDERS = {
+            timemore_c3: { name: "Timemore C3 / C3S Pro", baseClicks: 15, range: 1, note: "Эталон под Мока-эспрессо и Флэт Уайт" },
+            comandante: { name: "Comandante C40", baseClicks: 16, range: 2, note: "Стандартная ось (32 клика на Red Clix)" },
+            '1zpresso_q2': { name: "1Zpresso Q2 / JX", baseClicks: 42, range: 3, note: "1.4 оборота от нуля" },
+            kingrinder_k6: { name: "KINGrinder K6", baseClicks: 55, range: 4, note: "Внешнее кольцо регулировки" },
+            generic_burr: { name: "Универсальная жерновая", baseClicks: 10, range: 2, note: "Шкала 1–30 (средне-мелкий помол)" }
+        };
+
+        // =========================================================================
+        // 4. APPLICATION STATE (DEFAULT: 2-CUP MOKA, 12.0G COFFEE, 70ML WATER)
+        // =========================================================================
+        let state = {
+            selectedDrink: 'espresso',
+            mokaSize: 2,           // 2-cup Bialetti (90 ml)
+            coffeeGrams: 12.0,     // 12.0 g coffee in funnel
+            waterMl: 70,           // 70 ml water in lower chamber
+            modifierMl: 0,         // Additional milk or water
+            ratioLocked: false,
+            lockedRatioValue: +(70 / 12).toFixed(2), // 5.83
+            savedPresets: []
+        };
+
+        const WATER_RETENTION_PER_GRAM = 1.9;
+
+        function calculateCoffeeYield(waterMl, coffeeGrams) {
+            const retained = coffeeGrams * WATER_RETENTION_PER_GRAM;
+            const rawYield = waterMl - retained;
+            return Math.max(10, Math.round(Math.min(rawYield, waterMl * 0.88)));
+        }
+
+        // Render Drink Selector Grid (Step 6 Aero Glass classes)
+        function renderDrinkSelector() {
+            const container = document.getElementById('drink-grid');
+            container.innerHTML = '';
+
+            Object.values(DRINKS).forEach(drink => {
+                const isSelected = state.selectedDrink === drink.id;
+                const btn = document.createElement('button');
+                btn.onclick = () => selectDrink(drink.id);
+                btn.className = `tile-btn text-left p-4 flex flex-col justify-between gap-2.5 ${isSelected ? 'active' : ''}`;
+
+                btn.innerHTML = `
+                    <div class="flex items-center justify-between w-full">
+                        <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${isSelected ? 'bg-sky-500 text-white shadow-sm' : 'bg-sky-100/80 text-sky-800'}">${drink.code}</span>
+                        <span class="w-2.5 h-2.5 rounded-full ${isSelected ? 'bg-sky-500 ring-4 ring-sky-300/50' : 'bg-slate-300'}"></span>
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm text-[#0f2942]">${drink.name}</div>
+                        <div class="text-xs text-[#4a6b82] mt-1 leading-snug">${drink.shortDesc}</div>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // Render 6 Moka Pot Sizes (1, 2, 3, 4, 6, 9)
+        function renderMokaSizeButtons() {
+            const container = document.getElementById('moka-size-buttons');
+            container.innerHTML = '';
+
+            Object.values(MOKA_SIZES).forEach(sizeObj => {
+                const active = state.mokaSize === sizeObj.cups;
+                const btn = document.createElement('button');
+                btn.onclick = () => selectMokaSize(sizeObj.cups);
+                btn.className = `tile-btn py-2.5 px-2 text-center flex flex-col items-center justify-center ${active ? 'active' : ''}`;
+                btn.innerHTML = `
+                    <div class="text-xs font-extrabold ${active ? 'text-sky-700' : 'text-[#0f2942]'}">${sizeObj.cups} чаш.</div>
+                    <div class="text-[11px] font-mono-num text-[#4a6b82] mt-0.5">${sizeObj.maxWater} мл</div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectDrink(drinkId) {
+            state.selectedDrink = drinkId;
+            const moka = MOKA_SIZES[state.mokaSize];
+
+            if (state.mokaSize === 2) {
+                state.coffeeGrams = 12.0;
+                state.waterMl = 70;
+            } else {
+                state.coffeeGrams = moka.defaultEspressoCoffee;
+                state.waterMl = moka.defaultEspressoWater;
+            }
+
+            state.lockedRatioValue = +(state.waterMl / state.coffeeGrams).toFixed(2);
+            autoSyncModifier(false);
+            renderDrinkSelector();
+            updateUI();
+        }
+
+        function selectMokaSize(cups) {
+            state.mokaSize = cups;
+            const moka = MOKA_SIZES[cups];
+
+            state.coffeeGrams = moka.defaultEspressoCoffee;
+            state.waterMl = moka.defaultEspressoWater;
+            state.lockedRatioValue = +(state.waterMl / state.coffeeGrams).toFixed(2);
+
+            autoSyncModifier(false);
+            renderMokaSizeButtons();
+            updateUI();
+        }
+
+        function setStandard2CupPreset() {
+            state.mokaSize = 2;
+            state.coffeeGrams = 12.0;
+            state.waterMl = 70;
+            state.lockedRatioValue = +(70 / 12.0).toFixed(2);
+            autoSyncModifier(false);
+            renderMokaSizeButtons();
+            updateUI();
+            showToast("Загружен эталон: 2 чашки (12 г кофе : 70 мл воды)");
+        }
+
+        function resetToDrinkDefault() {
+            selectDrink(state.selectedDrink);
+            showToast("Пропорции сброшены к эталонным");
+        }
+
+        function autoSyncModifier(notify = true) {
+            const drink = DRINKS[state.selectedDrink];
+            const yieldMl = calculateCoffeeYield(state.waterMl, state.coffeeGrams);
+
+            if (drink.modifierType === 'none') {
+                state.modifierMl = 0;
+            } else {
+                state.modifierMl = Math.round((yieldMl * drink.modifierRatio) / 5) * 5;
+            }
+            if (notify) {
+                updateUI();
+                showToast(`Авто-расчет добавки: ${state.modifierMl} мл`);
+            }
+        }
+
+        function handleCoffeeChange(val) {
+            let parsed = parseFloat(val);
+            if (isNaN(parsed) || parsed < 4) parsed = 4;
+            if (parsed > 55) parsed = 55;
+            state.coffeeGrams = parsed;
+
+            if (state.ratioLocked) {
+                state.waterMl = Math.round(state.coffeeGrams * state.lockedRatioValue);
+            }
+            updateUI();
+        }
+
+        function handleWaterChange(val) {
+            let parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 20) parsed = 20;
+            if (parsed > 500) parsed = 500;
+            state.waterMl = parsed;
+
+            if (state.ratioLocked) {
+                state.coffeeGrams = Math.round((state.waterMl / state.lockedRatioValue) * 2) / 2;
+            }
+            updateUI();
+        }
+
+        function handleModifierChange(val) {
+            let parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed < 0) parsed = 0;
+            if (parsed > 1000) parsed = 1000;
+            state.modifierMl = parsed;
+            updateUI();
+        }
+
+        function toggleRatioLock() {
+            state.ratioLocked = !state.ratioLocked;
+            state.lockedRatioValue = +(state.waterMl / state.coffeeGrams).toFixed(2);
+            updateUI();
+        }
+
+        // =========================================================================
+        // 5. UPDATE UI & REALISTIC SVG CROSS-SECTIONS
+        // =========================================================================
+        function updateUI() {
+            const moka = MOKA_SIZES[state.mokaSize];
+            const drink = DRINKS[state.selectedDrink];
+            const yieldMl = calculateCoffeeYield(state.waterMl, state.coffeeGrams);
+            const ratio = (state.waterMl / state.coffeeGrams).toFixed(1);
+
+            // Sync Sliders & Numeric Inputs
+            const coffeeSlider = document.getElementById('coffee-slider');
+            coffeeSlider.max = Math.max(Math.round(moka.maxCoffee * 1.25), 18);
+            coffeeSlider.value = state.coffeeGrams;
+            document.getElementById('coffee-input').value = state.coffeeGrams;
+
+            const waterSlider = document.getElementById('water-slider');
+            waterSlider.max = Math.round(moka.maxWater * 1.2);
+            waterSlider.value = state.waterMl;
+            document.getElementById('water-input').value = state.waterMl;
+
+            document.getElementById('moka-dimensions-badge').textContent = `Габариты: высота ${moka.heightCm.toFixed(1)} см • дно ${moka.baseWidthCm.toFixed(1)} см`;
+            document.getElementById('moka-max-info').textContent = `Бойлер: ${moka.maxWater} мл | Корзина: ~${moka.maxCoffee} г`;
+            document.getElementById('valve-limit-label').textContent = `Лимит клапана: ${moka.maxWater} мл`;
+
+            // Funnel Basket Fill Status
+            const basketPct = Math.round((state.coffeeGrams / moka.maxCoffee) * 100);
+            const basketStatusEl = document.getElementById('basket-fill-status');
+            if (basketPct > 105) {
+                basketStatusEl.textContent = `Перегруз воронки (${basketPct}%) — не трамбовать!`;
+                basketStatusEl.className = 'text-red-600 font-bold';
+            } else {
+                basketStatusEl.textContent = `Заполнение воронки: ${basketPct}%`;
+                basketStatusEl.className = 'text-[#4a6b82] font-medium';
+            }
+
+            // Brew Ratio Lock Status
+            document.getElementById('brew-ratio-badge').textContent = `1 : ${ratio}`;
+            const lockBtn = document.getElementById('lock-ratio-btn');
+            if (state.ratioLocked) {
+                lockBtn.textContent = 'Пропорция: Зафиксирована';
+                lockBtn.className = 'cta-btn cta-btn-emerald';
+            } else {
+                lockBtn.textContent = 'Пропорция: Свободно';
+                lockBtn.className = 'cta-btn';
+            }
+
+            // Modifier (Milk / Water) Control
+            const milkSlider = document.getElementById('milk-slider');
+            const milkInput = document.getElementById('milk-input');
+            const modLabel = document.getElementById('modifier-label');
+            const modHint = document.getElementById('modifier-ratio-hint');
+
+            milkSlider.max = Math.max(250, Math.round(yieldMl * 4.5));
+            milkSlider.value = state.modifierMl;
+            milkInput.value = state.modifierMl;
+
+            if (drink.modifierType === 'milk') {
+                modLabel.textContent = `Молоко для «${drink.name}» (мл)`;
+                const idealMilk = Math.round((yieldMl * drink.modifierRatio) / 5) * 5;
+                modHint.textContent = `Рекомендация под выход ${yieldMl} мл: ~${idealMilk} мл молока`;
+            } else if (drink.modifierType === 'water') {
+                modLabel.textContent = `Горячая вода для Американо (мл)`;
+                const idealWater = Math.round((yieldMl * drink.modifierRatio) / 5) * 5;
+                modHint.textContent = `Рекомендация под выход ${yieldMl} мл: ~${idealWater} мл воды`;
+            } else {
+                modLabel.textContent = `Доп. молоко / вода (опционально)`;
+                modHint.textContent = `Для чистого эспрессо добавки: 0 мл`;
+            }
+
+            // SCHEMATIC 1: MOKA POT
+            document.getElementById('moka-svg-title').textContent = `Мока: ${moka.name} (${moka.maxWater} мл)`;
+            document.getElementById('svg-height-cm').textContent = `${moka.heightCm.toFixed(1)} см`;
+            document.getElementById('svg-width-cm').textContent = `Дно: ${moka.baseWidthCm.toFixed(1)} см`;
+
+            const waterRatioToValve = state.waterMl / moka.maxWater;
+            const waterValveStatus = document.getElementById('water-valve-status');
+            const safetyBadge = document.getElementById('safety-badge');
+            const svgBoilerWater = document.getElementById('svg-boiler-water');
+            const svgBoilerWaterLine = document.getElementById('svg-boiler-water-line');
+
+            const boilerBottomY = 322;
+            const maxSafeHeightPx = 94; // from 322 to valve at 228
+            const currentWaterHeightPx = Math.min(108, Math.max(14, Math.round(waterRatioToValve * maxSafeHeightPx)));
+            const currentWaterY = boilerBottomY - currentWaterHeightPx;
+
+            svgBoilerWater.setAttribute('y', currentWaterY);
+            svgBoilerWater.setAttribute('height', currentWaterHeightPx);
+            svgBoilerWaterLine.setAttribute('y1', currentWaterY);
+            svgBoilerWaterLine.setAttribute('y2', currentWaterY);
+            document.getElementById('svg-water-text').textContent = `${state.waterMl} мл воды`;
+
+            const pctOfValve = Math.round(waterRatioToValve * 100);
+            if (state.waterMl > moka.maxWater) {
+                waterValveStatus.textContent = `Опасно: выше клапана (${pctOfValve}%)!`;
+                waterValveStatus.className = 'text-red-600 font-bold';
+                safetyBadge.className = 'px-3.5 py-1 border border-red-400 bg-red-100/90 text-red-700 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm';
+                safetyBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 inline-block blink-pixel"></span> Клапан перекрыт! Слейте ${state.waterMl - moka.maxWater} мл`;
+            } else {
+                waterValveStatus.textContent = `${pctOfValve}% от уровня клапана`;
+                waterValveStatus.className = 'text-sky-700 font-semibold';
+                safetyBadge.className = 'px-3.5 py-1 border border-emerald-400 bg-emerald-100/90 text-emerald-800 rounded-full text-xs font-bold flex items-center gap-2 shadow-sm';
+                safetyBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 inline-block blink-pixel"></span> Клапан открыт (Норма)`;
+            }
+
+            // Funnel Coffee Grounds Level
+            const basketRatio = Math.min(1.05, Math.max(0.25, state.coffeeGrams / moka.maxCoffee));
+            const groundsHeightPx = Math.round(basketRatio * 41);
+            const groundsY = 225 - groundsHeightPx;
+            document.getElementById('svg-coffee-grounds').setAttribute('y', groundsY);
+            document.getElementById('svg-coffee-grounds').setAttribute('height', groundsHeightPx);
+            document.getElementById('svg-coffee-grounds-solid').setAttribute('y', groundsY);
+            document.getElementById('svg-coffee-grounds-solid').setAttribute('height', groundsHeightPx);
+            document.getElementById('svg-coffee-text').textContent = `${state.coffeeGrams} г кофе`;
+
+            // Upper Chamber Extracted Coffee Level (4px crema)
+            const maxPossibleYield = moka.maxWater * 0.82;
+            const yieldRatio = Math.min(1, Math.max(0.18, yieldMl / maxPossibleYield));
+            const upperHeightPx = Math.round(yieldRatio * 88);
+            const upperY = 168 - upperHeightPx;
+            document.getElementById('svg-upper-coffee').setAttribute('y', upperY);
+            document.getElementById('svg-upper-coffee').setAttribute('height', upperHeightPx);
+            document.getElementById('svg-upper-crema').setAttribute('y', upperY - 4);
+            document.getElementById('svg-yield-text').textContent = `Выход базы: ~${yieldMl} мл`;
+
+            // SCHEMATIC 2: FINAL DRINK CUP
+            document.getElementById('cup-svg-title').textContent = `Чашка: ${drink.name}`;
+            const totalDrinkVolume = yieldMl + state.modifierMl;
+            document.getElementById('cup-total-volume').textContent = `Итого: ${totalDrinkVolume} мл`;
+
+            const cupVisualCapacity = Math.max(170, totalDrinkVolume * 1.15);
+            const cupBottomY = 306;
+            const cupMaxPx = 215;
+
+            const coffeeLayerPx = Math.max(36, Math.round((yieldMl / cupVisualCapacity) * cupMaxPx));
+            const coffeeTopY = cupBottomY - coffeeLayerPx;
+
+            document.getElementById('cup-layer-coffee').setAttribute('y', coffeeTopY);
+            document.getElementById('cup-layer-coffee').setAttribute('height', coffeeLayerPx);
+            document.getElementById('cup-layer-crema').setAttribute('y', coffeeTopY - 4);
+            document.getElementById('cup-label-coffee').textContent = `Мока-база: ${yieldMl} мл`;
+
+            const svgCupMod = document.getElementById('cup-layer-modifier');
+            const svgCupModBg = document.getElementById('cup-layer-modifier-bg');
+            const svgCupFoam = document.getElementById('cup-layer-foam');
+            const modLabelGroup = document.getElementById('cup-label-modifier-group');
+            const foamLabelGroup = document.getElementById('cup-label-foam-group');
+
+            if (state.modifierMl > 0) {
+                const totalModPx = Math.max(34, Math.round((state.modifierMl / cupVisualCapacity) * cupMaxPx));
+                const foamShare = drink.modifierType === 'milk' ? (drink.foamShare || 0.15) : 0;
+                const foamMl = Math.round(state.modifierMl * foamShare);
+                const liquidModMl = state.modifierMl - foamMl;
+
+                const foamPx = foamMl > 0 ? Math.max(14, Math.round(totalModPx * foamShare)) : 0;
+                const liquidModPx = totalModPx - foamPx;
+
+                const modTopY = coffeeTopY - liquidModPx;
+                const foamTopY = modTopY - foamPx;
+
+                svgCupMod.setAttribute('y', modTopY);
+                svgCupMod.setAttribute('height', liquidModPx);
+                svgCupModBg.setAttribute('y', modTopY);
+                svgCupModBg.setAttribute('height', liquidModPx);
+
+                if (drink.modifierType === 'water') {
+                    svgCupModBg.setAttribute('fill', '#e0f2fe');
+                    document.getElementById('cup-label-modifier').textContent = `Горячая вода: +${state.modifierMl} мл`;
+                } else {
+                    svgCupModBg.setAttribute('fill', '#fffdf7');
+                    document.getElementById('cup-label-modifier').textContent = `Молоко: +${liquidModMl} мл`;
+                }
+
+                modLabelGroup.setAttribute('opacity', '1');
+
+                if (foamPx > 0) {
+                    svgCupFoam.setAttribute('y', foamTopY);
+                    svgCupFoam.setAttribute('height', foamPx);
+                    document.getElementById('cup-label-foam').textContent = `Микропена: ~${foamMl} мл`;
+                    foamLabelGroup.setAttribute('opacity', '1');
+                } else {
+                    svgCupFoam.setAttribute('height', 0);
+                    foamLabelGroup.setAttribute('opacity', '0');
+                }
+            } else {
+                svgCupMod.setAttribute('height', 0);
+                svgCupModBg.setAttribute('height', 0);
+                svgCupFoam.setAttribute('height', 0);
+                modLabelGroup.setAttribute('opacity', '0');
+                foamLabelGroup.setAttribute('opacity', '0');
+            }
+
+            // Telemetry Summary Cards
+            document.getElementById('stat-dose').textContent = `${state.coffeeGrams} г`;
+            document.getElementById('stat-water').textContent = `${state.waterMl} мл`;
+            document.getElementById('stat-yield').textContent = `~${yieldMl} мл`;
+            document.getElementById('stat-modifier').textContent = state.modifierMl > 0 ? `+${state.modifierMl} мл` : '0 мл';
+
+            // Update Grinder & Protocol Steps
+            updateGrinderClicks(ratio);
+            renderProtocolSteps(yieldMl, totalDrinkVolume);
+        }
+
+        function updateGrinderClicks(ratio) {
+            const grinderKey = document.getElementById('grinder-select').value;
+            const blendKey = document.getElementById('blend-select').value;
+            const grinder = GRINDERS[grinderKey];
+
+            let offset = 0;
+            if (parseFloat(ratio) > 7.0) offset += 1;
+            if (state.mokaSize >= 6) offset += 1;
+            if (blendKey === 'arabica_dark') offset += 1;
+            if (blendKey === 'arabica_light') offset -= 1;
+
+            const optimalClicks = grinder.baseClicks + offset;
+            const minClicks = optimalClicks - grinder.range;
+            const maxClicks = optimalClicks + grinder.range;
+
+            document.getElementById('grinder-clicks-main').textContent = `${minClicks}–${maxClicks} щелчков`;
+            document.getElementById('grinder-clicks-sub').textContent = `Оптимум: ${optimalClicks} кликов • ${grinder.note}`;
+            document.getElementById('grinder-optimal-num').textContent = optimalClicks;
+        }
+
+        function renderProtocolSteps(yieldMl, totalDrinkVolume) {
+            const drink = DRINKS[state.selectedDrink];
+            const grinderKey = document.getElementById('grinder-select').value;
+            const grinderName = GRINDERS[grinderKey].name;
+            const optimalClicks = document.getElementById('grinder-optimal-num').textContent;
+
+            document.getElementById('protocol-badge').textContent = `${drink.name} • Выход ~${totalDrinkVolume} мл`;
+
+            const steps = [
+                {
+                    num: "Шаг 1",
+                    title: "Дозировка и помол зерна",
+                    desc: `Взвесьте <span class="text-amber-800 font-bold">${state.coffeeGrams} г</span> кофе и смелите на кофемолке <span class="text-sky-800 font-bold">${grinderName} (${optimalClicks} щелчков)</span>.`
+                },
+                {
+                    num: "Шаг 2",
+                    title: "Заполнение нижней чаши (бойлера)",
+                    desc: `Залейте ровно <span class="text-sky-700 font-bold">${state.waterMl} мл</span> чистой воды в нижнюю чашу Моки (${MOKA_SIZES[state.mokaSize].name}). Убедитесь, что вода ниже латунного клапана.`
+                },
+                {
+                    num: "Шаг 3",
+                    title: "Загрузка воронки без трамбовки",
+                    desc: `Засыпьте <span class="text-amber-800 font-bold">${state.coffeeGrams} г</span> молотого кофе в металлическую воронку. Аккуратно разровняйте постукиванием — не утрамбовывайте.`
+                },
+                {
+                    num: "Шаг 4",
+                    title: "Медленная экстракция и остановка",
+                    desc: `Поставьте Моку на малый или средний огонь. Когда в верхней чаше наберется <span class="text-amber-900 font-bold">~${yieldMl} мл</span> плотного кофе с крема — снимите с плиты и охладите дно.`
+                }
+            ];
+
+            if (drink.modifierType === 'milk' && state.modifierMl > 0) {
+                const foamMl = Math.round(state.modifierMl * (drink.foamShare || 0.15));
+                steps.push({
+                    num: "Шаг 5",
+                    title: `Приготовление «${drink.name}»`,
+                    desc: `Подогрейте и взбейте <span class="text-sky-700 font-bold">${state.modifierMl} мл молока</span> (включая ~${foamMl} мл шелковистой микропены) и влейте в чашку с <span class="text-amber-900 font-bold">${yieldMl} мл</span> кофейной базы.`
+                });
+            } else if (drink.modifierType === 'water' && state.modifierMl > 0) {
+                steps.push({
+                    num: "Шаг 5",
+                    title: `Сборка «${drink.name}» (Bypass)`,
+                    desc: `В чашку с <span class="text-amber-900 font-bold">${yieldMl} мл</span> приготовленной Мока-базы добавьте <span class="text-sky-700 font-bold">${state.modifierMl} мл</span> горячей воды.`
+                });
+            } else {
+                steps.push({
+                    num: "Шаг 5",
+                    title: `Подача «${drink.name}»`,
+                    desc: `Перемешайте кофе в верхней чаше ложечкой для равномерной плотности и перелейте <span class="text-amber-900 font-bold">${yieldMl} мл</span> в прогретую чашку.`
+                });
+            }
+
+            const container = document.getElementById('recipe-steps');
+            container.innerHTML = steps.map(s => `
+                <div class="p-4 bg-white/60 border border-white/80 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-start gap-3.5">
+                        <span class="px-3 py-1 rounded-full bg-gradient-to-b from-sky-400 to-sky-600 text-white text-xs font-bold shadow-sm shrink-0">
+                            ${s.num}
+                        </span>
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold text-[#0f2942]">${s.title}</div>
+                            <p class="text-xs text-[#4a6b82] mt-1 leading-relaxed">${s.desc}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =========================================================================
+        // 6. PRESETS & JSON EXPORT / IMPORT
+        // =========================================================================
+        function loadSavedPresets() {
+            try {
+                const raw = localStorage.getItem('mokalab_aero_presets');
+                if (raw) {
+                    state.savedPresets = JSON.parse(raw);
+                    renderSavedPresetsBar();
+                }
+            } catch (e) {}
+        }
+
+        function saveCustomPreset() {
+            const drinkName = DRINKS[state.selectedDrink].name;
+            const preset = {
+                id: Date.now(),
+                title: `${drinkName} (${state.mokaSize}ч: ${state.coffeeGrams}г / ${state.waterMl}мл)`,
+                selectedDrink: state.selectedDrink,
+                mokaSize: state.mokaSize,
+                coffeeGrams: state.coffeeGrams,
+                waterMl: state.waterMl,
+                modifierMl: state.modifierMl
+            };
+            state.savedPresets.unshift(preset);
+            if (state.savedPresets.length > 6) state.savedPresets.pop();
+
+            try {
+                localStorage.setItem('mokalab_aero_presets', JSON.stringify(state.savedPresets));
+            } catch (e) {}
+
+            renderSavedPresetsBar();
+            showToast("Рецепт сохранен в память браузера");
+        }
+
+        function applySavedPreset(id) {
+            const found = state.savedPresets.find(p => p.id === id);
+            if (!found) return;
+            if (DRINKS[found.selectedDrink]) state.selectedDrink = found.selectedDrink;
+            if (MOKA_SIZES[found.mokaSize]) state.mokaSize = found.mokaSize;
+            state.coffeeGrams = found.coffeeGrams;
+            state.waterMl = found.waterMl;
+            state.modifierMl = found.modifierMl;
+            renderDrinkSelector();
+            renderMokaSizeButtons();
+            updateUI();
+            showToast(`Загружен: ${found.title}`);
+        }
+
+        function deleteSavedPreset(id, event) {
+            event.stopPropagation();
+            state.savedPresets = state.savedPresets.filter(p => p.id !== id);
+            try {
+                localStorage.setItem('mokalab_aero_presets', JSON.stringify(state.savedPresets));
+            } catch (e) {}
+            renderSavedPresetsBar();
+        }
+
+        function renderSavedPresetsBar() {
+            const bar = document.getElementById('saved-presets-bar');
+            const list = document.getElementById('saved-presets-list');
+            if (!state.savedPresets.length) {
+                bar.classList.add('hidden');
+                return;
+            }
+            bar.classList.remove('hidden');
+            list.innerHTML = state.savedPresets.map(p => `
+                <div onclick="applySavedPreset(${p.id})" class="cursor-pointer px-3 py-1.5 bg-white/60 border border-white/80 rounded-xl shadow-sm hover:bg-white/90 hover:border-sky-300 text-xs font-medium text-[#0f2942] flex items-center gap-2 transition">
+                    <span>${p.title}</span>
+                    <button onclick="deleteSavedPreset(${p.id}, event)" class="text-slate-400 hover:text-red-500 font-bold">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function openJsonModal() {
+            const exportData = {
+                system: "MokaLab_Frutiger_Aero",
+                version: "2.5",
+                recipe: {
+                    drink: state.selectedDrink,
+                    mokaCups: state.mokaSize,
+                    coffeeGrams: state.coffeeGrams,
+                    boilerWaterMl: state.waterMl,
+                    expectedCoffeeYieldMl: calculateCoffeeYield(state.waterMl, state.coffeeGrams),
+                    addedMilkOrWaterMl: state.modifierMl,
+                    grinder: document.getElementById('grinder-select').value,
+                    blend: document.getElementById('blend-select').value
+                }
+            };
+            document.getElementById('json-textarea').value = JSON.stringify(exportData, null, 2);
+            document.getElementById('json-modal').classList.remove('hidden');
+        }
+
+        function closeJsonModal() {
+            document.getElementById('json-modal').classList.add('hidden');
+        }
+
+        function copyJsonConfig() {
+            const textarea = document.getElementById('json-textarea');
+            textarea.select();
+            document.execCommand('copy');
+            showToast("JSON-код скопирован в буфер обмена");
+        }
+
+        function applyJsonConfig() {
+            try {
+                const raw = document.getElementById('json-textarea').value;
+                const parsed = JSON.parse(raw);
+                const r = parsed.recipe || parsed;
+
+                if (r.drink && DRINKS[r.drink]) state.selectedDrink = r.drink;
+                if (r.mokaCups && MOKA_SIZES[r.mokaCups]) state.mokaSize = r.mokaCups;
+                if (typeof r.coffeeGrams === 'number') state.coffeeGrams = r.coffeeGrams;
+                if (typeof r.boilerWaterMl === 'number') state.waterMl = r.boilerWaterMl;
+                if (typeof r.addedMilkOrWaterMl === 'number') state.modifierMl = r.addedMilkOrWaterMl;
+
+                renderDrinkSelector();
+                renderMokaSizeButtons();
+                updateUI();
+                closeJsonModal();
+                showToast("Конфигурация JSON успешно применена");
+            } catch (err) {
+                showToast("Ошибка чтения JSON-формата");
+            }
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = message;
+            toast.classList.remove('translate-y-28', 'opacity-0');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('translate-y-28', 'opacity-0');
+            }, 2600);
+        }
+
+        window.onload = function () {
+            renderDrinkSelector();
+            renderMokaSizeButtons();
+            loadSavedPresets();
+            updateUI();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>

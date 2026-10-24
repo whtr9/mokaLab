@@ -1538,5 +1538,14 @@
             lucide.createIcons();
         };
     </script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js')
+            .then((reg) => console.log('Service Worker зарегистрирован:', reg.scope))
+            .catch((err) => console.error('Ошибка регистрации Service Worker:', err));
+        });
+      }
+    </script>
 </body>
 </html>

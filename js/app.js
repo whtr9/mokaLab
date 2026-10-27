@@ -1,4 +1,4 @@
-import { MOKA_SIZES } from './data.js';
+import { MOKA_SIZES, saveCustomMokaToCatalog, deleteCustomMokaFromCatalog } from './data.js';
 import { state, resetState } from './state.js';
 import { renderDrinkSelector, renderMokaSizeButtons, syncSlidersToSize, updateUI } from './ui.js';
 import * as storage from './storage.js';
@@ -10,15 +10,59 @@ function selectDrink(drinkId) {
   updateUI();
 }
 
-function selectMokaSize(cups) {
-  state.mokaSize = cups;
-  const sizeObj = MOKA_SIZES[cups];
+function selectMokaSize(cupsKey) {
+  const sizeObj = MOKA_SIZES[cupsKey];
+  if (!sizeObj) return;
+  state.mokaSize = sizeObj.cups;
   state.coffeeG = sizeObj.defaultCoffeeG;
   state.waterMl = sizeObj.defaultWaterMl;
   state.lockedRatioValue = state.waterMl / state.coffeeG;
   renderMokaSizeButtons();
-  syncSlidersToSize(cups);
+  syncSlidersToSize(state.mokaSize);
   updateUI();
+}
+
+function openCustomMokaModal() {
+  document.getElementById('custom-moka-name').value = '';
+  document.getElementById('custom-moka-coffee').value = '';
+  document.getElementById('custom-moka-water').value = '';
+  const modal = document.getElementById('custom-moka-modal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeCustomMokaModal() {
+  const modal = document.getElementById('custom-moka-modal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function confirmAddCustomMoka() {
+  const name = document.getElementById('custom-moka-name').value;
+  const coffeeVal = parseFloat(document.getElementById('custom-moka-coffee').value);
+  const waterVal = parseInt(document.getElementById('custom-moka-water').value, 10);
+
+  if (isNaN(coffeeVal) || coffeeVal < 4 || coffeeVal > 65) {
+    alert('Пожалуйста, укажите реальную вместимость воронки в граммах (от 4 до 65 г).');
+    return;
+  }
+  if (isNaN(waterVal) || waterVal < 25 || waterVal > 550) {
+    alert('Пожалуйста, укажите реальный объем бойлера до клапана в миллилитрах (от 25 до 550 мл).');
+    return;
+  }
+
+  const created = saveCustomMokaToCatalog(name, coffeeVal, waterVal);
+  closeCustomMokaModal();
+  selectMokaSize(created.id);
+}
+
+function removeCustomMoka(id) {
+  deleteCustomMokaFromCatalog(id);
+  if (String(state.mokaSize) === String(id)) {
+    selectMokaSize('2');
+  } else {
+    renderMokaSizeButtons();
+  }
 }
 
 function toggleRatioLock() {
@@ -90,11 +134,14 @@ function resetToDefaultStandard() {
   document.getElementById('paper-filter-checkbox').checked = false;
   renderDrinkSelector();
   renderMokaSizeButtons();
-  syncSlidersToSize(2);
+  syncSlidersToSize('2');
   updateUI();
 }
 
 function init() {
+  if (!MOKA_SIZES[state.mokaSize]) {
+    state.mokaSize = '2';
+  }
   renderDrinkSelector();
   renderMokaSizeButtons();
   syncSlidersToSize(state.mokaSize);
@@ -107,6 +154,10 @@ function init() {
 Object.assign(window, {
   selectDrink,
   selectMokaSize,
+  openCustomMokaModal,
+  closeCustomMokaModal,
+  confirmAddCustomMoka,
+  removeCustomMoka,
   toggleRatioLock,
   handleCoffeeSlider,
   handleManualCoffeeInput,

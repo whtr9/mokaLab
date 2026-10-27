@@ -135,31 +135,39 @@ export function updateUI() {
   document.getElementById('grind-micron-badge').textContent =
     state.usePaperFilter ? '~420–490 мкм (с фильтром)' : '~380–450 мкм';
 
-  // 4. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА МОКИ
+  // 4. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА МОКИ (Координаты предыдущего индекса: бойлер 214..328, клапан Y=229)
   document.getElementById('svg-moka-title-badge').textContent = `${sizeObj.name} (${sizeObj.totalVolumeMl} мл)`;
-  document.getElementById('svg-dim-height').textContent = `${sizeObj.heightCm.toFixed(1)} см`;
-  document.getElementById('svg-dim-width').textContent = `Ø ${sizeObj.baseWidthCm.toFixed(1)} см`;
+  document.getElementById('svg-dim-height').textContent = `${sizeObj.heightCm.toFixed(1)}СМ`;
+  document.getElementById('svg-dim-width').textContent = `Ø ${sizeObj.baseWidthCm.toFixed(1)} СМ`;
 
-  const maxBoilerHeightPx = 72;
-  const waterHeightPx = Math.min(82, Math.max(14, Math.round((state.waterMl / sizeObj.boilerMaxWaterMl) * maxBoilerHeightPx)));
-  const waterY = 292 - waterHeightPx;
+  const boilerBottomY = 328;
+  const valveLineY = 229;
+  const maxDrawableWaterHeight = boilerBottomY - valveLineY; // 99px до клапана
+  const waterHeightPx = Math.min(114, Math.max(12, (state.waterMl / sizeObj.boilerMaxWaterMl) * maxDrawableWaterHeight));
+  const waterTopY = boilerBottomY - waterHeightPx;
+
   const boilerWaterRect = document.getElementById('svg-boiler-water');
-  boilerWaterRect.setAttribute('y', waterY);
+  const waterSurfaceLine = document.getElementById('svg-water-surface');
+  boilerWaterRect.setAttribute('y', waterTopY);
   boilerWaterRect.setAttribute('height', waterHeightPx);
-  document.getElementById('svg-water-label').textContent = `${state.waterMl} мл (~20°C)`;
+  waterSurfaceLine.setAttribute('y1', waterTopY);
+  waterSurfaceLine.setAttribute('y2', waterTopY);
+  document.getElementById('svg-water-label').textContent = `${state.waterMl} МЛ (~20°C)`;
 
-  const maxBasketHeightPx = 42;
+  // Корзина с молотым кофе (Y от 184 до 238, высота 54px) + зона пустоты сверху
+  const basketBottomY = 238;
+  const maxBasketHeight = 54;
   const coffeeFillRatio = Math.min(1, state.coffeeG / sizeObj.defaultCoffeeG);
-  const groundsHeightPx = Math.max(16, Math.round(coffeeFillRatio * maxBasketHeightPx));
-  const groundsY = 210 - groundsHeightPx;
-  const voidHeightPx = Math.max(0, 42 - groundsHeightPx);
+  const coffeeHeightPx = Math.max(14, Math.round(coffeeFillRatio * maxBasketHeight));
+  const coffeeTopY = basketBottomY - coffeeHeightPx;
+  const voidHeightPx = Math.max(0, maxBasketHeight - coffeeHeightPx);
 
-  document.getElementById('svg-coffee-grounds-solid').setAttribute('y', groundsY);
-  document.getElementById('svg-coffee-grounds-solid').setAttribute('height', groundsHeightPx);
-  document.getElementById('svg-coffee-grounds').setAttribute('y', groundsY);
-  document.getElementById('svg-coffee-grounds').setAttribute('height', groundsHeightPx);
+  document.getElementById('svg-coffee-grounds-solid').setAttribute('y', coffeeTopY);
+  document.getElementById('svg-coffee-grounds-solid').setAttribute('height', coffeeHeightPx);
+  document.getElementById('svg-coffee-grounds').setAttribute('y', coffeeTopY);
+  document.getElementById('svg-coffee-grounds').setAttribute('height', coffeeHeightPx);
   document.getElementById('svg-headspace-void').setAttribute('height', voidHeightPx);
-  document.getElementById('svg-coffee-label').textContent = `${state.coffeeG.toFixed(1)} г кофе`;
+  document.getElementById('svg-coffee-label').textContent = `${state.coffeeG.toFixed(1)} Г КОФЕ`;
 
   const paperFilterSvg = document.getElementById('svg-paper-filter');
   if (state.usePaperFilter) {
@@ -168,73 +176,84 @@ export function updateUI() {
     paperFilterSvg.classList.add('hidden');
   }
 
-  const maxUpperHeightPx = 78;
-  const upperFillRatio = Math.min(1, yieldMl / sizeObj.totalVolumeMl);
-  const upperCoffeeHeightPx = Math.max(16, Math.round(upperFillRatio * maxUpperHeightPx));
-  const upperCoffeeY = 158 - upperCoffeeHeightPx;
+  // Выход кофе в верхней чаше (Y от 182 вниз, макс высота ~86px)
+  const upperBottomY = 182;
+  const maxUpperHeight = 86;
+  const yieldRatio = Math.min(1.0, yieldMl / (sizeObj.boilerMaxWaterMl * 0.85));
+  const upperHeightPx = Math.max(14, yieldRatio * maxUpperHeight);
+  const upperTopY = upperBottomY - upperHeightPx;
 
-  document.getElementById('svg-upper-coffee').setAttribute('y', upperCoffeeY);
-  document.getElementById('svg-upper-coffee').setAttribute('height', upperCoffeeHeightPx);
-  document.getElementById('svg-upper-crema').setAttribute('y', upperCoffeeY - 4);
-  document.getElementById('svg-yield-label').textContent = `Выход: ${yieldMl} мл`;
+  document.getElementById('svg-upper-coffee').setAttribute('y', upperTopY);
+  document.getElementById('svg-upper-coffee').setAttribute('height', upperHeightPx);
+  document.getElementById('svg-upper-crema').setAttribute('y', upperTopY - 4);
+  document.getElementById('svg-yield-label').textContent = `БАЗА: ~${yieldMl} МЛ`;
 
-  // 5. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА ИТОГОВОЙ ЧАШКИ
+  // 5. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА ИТОГОВОЙ ЧАШКИ (Координаты предыдущего индекса: дно 308, макс 215px)
   document.getElementById('svg-cup-title-badge').textContent = drinkObj.name;
-  const cupBottomY = 266;
-  const cupMaxDrawableHeight = 166;
-  const scaleCup = Math.min(1.1, cupMaxDrawableHeight / Math.max(90, totalDrinkMl));
+  document.getElementById('cup-total-top').textContent = `В ЧАШКЕ: ~${totalDrinkMl} МЛ`;
 
-  const coffeeLayerH = Math.max(28, Math.round(yieldMl * scaleCup));
-  const modifierLayerH = Math.round(modifierMl * scaleCup);
-  const foamLayerH = Math.round(foamMl * scaleCup);
+  const cupBottomY = 308;
+  const cupMaxHeightPx = 215;
+  const referenceScaleMaxMl = Math.max(totalDrinkMl * 1.12, yieldMl * 2.2, 120);
+  const pxPerMl = cupMaxHeightPx / referenceScaleMaxMl;
 
-  const coffeeLayerY = cupBottomY - coffeeLayerH;
-  const cremaLayerY = coffeeLayerY - 4;
-  const modifierLayerY = cremaLayerY - modifierLayerH;
-  const foamLayerY = modifierLayerY - foamLayerH;
+  const coffeeH = Math.max(26, yieldMl * pxPerMl);
+  const modH = modifierMl > 0 ? Math.max(24, modifierMl * pxPerMl) : 0;
+  const foamH = foamMl > 0 ? Math.max(16, foamMl * pxPerMl) : 0;
 
-  document.getElementById('cup-layer-coffee').setAttribute('y', coffeeLayerY);
-  document.getElementById('cup-layer-coffee').setAttribute('height', coffeeLayerH);
-  document.getElementById('cup-layer-crema').setAttribute('y', cremaLayerY);
+  const coffeeY = cupBottomY - coffeeH;
+  const modY = coffeeY - modH;
+  const foamY = modY - foamH;
 
-  const modBg = document.getElementById('cup-layer-modifier-bg');
-  const modPat = document.getElementById('cup-layer-modifier-pattern');
-  modBg.setAttribute('y', modifierLayerY);
-  modBg.setAttribute('height', modifierLayerH);
-  modPat.setAttribute('y', modifierLayerY);
-  modPat.setAttribute('height', modifierLayerH);
+  document.getElementById('cup-layer-coffee').setAttribute('y', coffeeY);
+  document.getElementById('cup-layer-coffee').setAttribute('height', coffeeH);
+  document.getElementById('cup-layer-crema').setAttribute('y', coffeeY - 4);
+
+  const modLayer = document.getElementById('cup-layer-modifier');
+  const modLayerBg = document.getElementById('cup-layer-modifier-bg');
+  modLayer.setAttribute('y', modY);
+  modLayer.setAttribute('height', modH);
+  modLayerBg.setAttribute('y', modY);
+  modLayerBg.setAttribute('height', modH);
 
   if (drinkObj.modifierType === 'water') {
-    modBg.setAttribute('fill', 'rgba(56, 189, 248, 0.55)');
-    modPat.setAttribute('fill-opacity', '0');
+    modLayerBg.setAttribute('fill', 'rgba(56, 189, 248, 0.55)');
+    modLayer.setAttribute('fill-opacity', '0');
   } else {
-    modBg.setAttribute('fill', '#fffdf7');
-    modPat.setAttribute('fill-opacity', '0.7');
+    modLayerBg.setAttribute('fill', '#fffdf7');
+    modLayer.setAttribute('fill-opacity', '1');
   }
 
-  const foamRect = document.getElementById('cup-layer-foam');
-  foamRect.setAttribute('y', foamLayerY);
-  foamRect.setAttribute('height', foamLayerH);
+  const foamLayer = document.getElementById('cup-layer-foam');
+  foamLayer.setAttribute('y', foamY);
+  foamLayer.setAttribute('height', foamH);
 
-  document.getElementById('cup-coffee-label').textContent = `Кофе-база: ${yieldMl} мл`;
-  document.getElementById('cup-total-badge').textContent = `Итого в чашке: ${totalDrinkMl} мл`;
+  // Плавающие подписи слоев чашки
+  document.getElementById('cup-label-coffee').textContent = `КОФЕ-БАЗА: ${yieldMl} МЛ`;
 
-  const modGroup = document.getElementById('cup-modifier-badge-group');
-  const foamGroup = document.getElementById('cup-foam-badge-group');
-
+  const modLabelGroup = document.getElementById('cup-label-mod-group');
   if (modifierMl > 0) {
-    modGroup.classList.remove('hidden');
-    const modTitle = drinkObj.modifierType === 'water' ? 'Горячая вода' : 'Молоко';
-    document.getElementById('cup-modifier-label').textContent = `${modTitle}: ${modifierMl} мл`;
+    modLabelGroup.setAttribute('opacity', '1');
+    const modCenterY = modY + modH / 2;
+    modLabelGroup.querySelector('rect').setAttribute('y', modCenterY - 10);
+    const textEl = document.getElementById('cup-label-mod');
+    textEl.setAttribute('y', modCenterY + 3);
+    const modTitle = drinkObj.modifierType === 'water' ? 'ГОРЯЧАЯ ВОДА' : 'МОЛОКО';
+    textEl.textContent = `${modTitle}: ${modifierMl} МЛ`;
   } else {
-    modGroup.classList.add('hidden');
+    modLabelGroup.setAttribute('opacity', '0');
   }
 
+  const foamLabelGroup = document.getElementById('cup-label-foam-group');
   if (foamMl > 0) {
-    foamGroup.classList.remove('hidden');
-    document.getElementById('cup-foam-label').textContent = `Микропена: ${foamMl} мл`;
+    foamLabelGroup.setAttribute('opacity', '1');
+    const foamCenterY = Math.max(84, foamY + foamH / 2);
+    foamLabelGroup.querySelector('rect').setAttribute('y', foamCenterY - 9);
+    const textEl = document.getElementById('cup-label-foam');
+    textEl.setAttribute('y', foamCenterY + 3);
+    textEl.textContent = `ПЕНА: ${foamMl} МЛ`;
   } else {
-    foamGroup.classList.add('hidden');
+    foamLabelGroup.setAttribute('opacity', '0');
   }
 
   // 6. РЕНДЕР ПОШАГОВОГО ПРОТОКОЛА

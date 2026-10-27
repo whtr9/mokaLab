@@ -1,84 +1,106 @@
-// 1. ЛИНЕЙКА РАЗМЕРОВ BIALETTI MOKA EXPRESS (1, 2, 3, 4, 6, 9 чашек)
-export const MOKA_SIZES = {
-  1: {
-    cups: 1,
-    name: '1 чашка',
-    totalVolumeMl: 60,
-    heightCm: 13.5,
-    baseWidthCm: 7.0,
-    boilerMaxWaterMl: 55,
-    defaultWaterMl: 45,
-    defaultCoffeeG: 8.0,
-    minCoffeeG: 6.0,
-    maxCoffeeG: 10.0,
-    minWaterMl: 25
-  },
+// 1. БАЗОВЫЕ ЭТАЛОНЫ МОКИ (только 2 и 3 чашки, без привязки к сантиметрам)
+export const DEFAULT_MOKA_SIZES = {
   2: {
-    cups: 2,
-    name: '2 чашки',
-    totalVolumeMl: 90,
-    heightCm: 14.5,
-    baseWidthCm: 8.0,
+    id: '2',
+    cups: '2',
+    name: '2 чашки (Эталон)',
     boilerMaxWaterMl: 80,
     defaultWaterMl: 70,
     defaultCoffeeG: 12.0,
     minCoffeeG: 9.0,
     maxCoffeeG: 15.0,
-    minWaterMl: 35
+    minWaterMl: 35,
+    isCustom: false
   },
   3: {
-    cups: 3,
-    name: '3 чашки',
-    totalVolumeMl: 130,
-    heightCm: 16.0,
-    baseWidthCm: 9.0,
+    id: '3',
+    cups: '3',
+    name: '3 чашки (Эталон)',
     boilerMaxWaterMl: 120,
     defaultWaterMl: 105,
     defaultCoffeeG: 17.0,
     minCoffeeG: 13.0,
     maxCoffeeG: 20.0,
-    minWaterMl: 55
-  },
-  4: {
-    cups: 4,
-    name: '4 чашки',
-    totalVolumeMl: 185,
-    heightCm: 18.0,
-    baseWidthCm: 9.5,
-    boilerMaxWaterMl: 170,
-    defaultWaterMl: 150,
-    defaultCoffeeG: 22.0,
-    minCoffeeG: 17.0,
-    maxCoffeeG: 26.0,
-    minWaterMl: 80
-  },
-  6: {
-    cups: 6,
-    name: '6 чашек',
-    totalVolumeMl: 250,
-    heightCm: 21.5,
-    baseWidthCm: 11.0,
-    boilerMaxWaterMl: 235,
-    defaultWaterMl: 205,
-    defaultCoffeeG: 28.0,
-    minCoffeeG: 22.0,
-    maxCoffeeG: 33.0,
-    minWaterMl: 110
-  },
-  9: {
-    cups: 9,
-    name: '9 чашек',
-    totalVolumeMl: 410,
-    heightCm: 25.0,
-    baseWidthCm: 11.5,
-    boilerMaxWaterMl: 380,
-    defaultWaterMl: 335,
-    defaultCoffeeG: 42.0,
-    minCoffeeG: 34.0,
-    maxCoffeeG: 48.0,
-    minWaterMl: 180
+    minWaterMl: 55,
+    isCustom: false
   }
 };
+
+const CUSTOM_MOKAS_STORAGE_KEY = 'mokalab_custom_mokas_v1';
+
+// Динамический справочник всех активных кофеварок (базовые + пользовательские)
+export const MOKA_SIZES = { ...DEFAULT_MOKA_SIZES };
+
+export function loadCustomMokasIntoCatalog() {
+  // Сбрасываем к базовым
+  Object.keys(MOKA_SIZES).forEach(k => delete MOKA_SIZES[k]);
+  Object.assign(MOKA_SIZES, DEFAULT_MOKA_SIZES);
+
+  try {
+    const raw = localStorage.getItem(CUSTOM_MOKAS_STORAGE_KEY);
+    if (!raw) return;
+    const customList = JSON.parse(raw);
+    if (Array.isArray(customList)) {
+      customList.forEach(item => {
+        MOKA_SIZES[item.id] = item;
+      });
+    }
+  } catch (e) {
+    console.error('Ошибка чтения кастомных кофеварок:', e);
+  }
+}
+
+export function saveCustomMokaToCatalog(name, coffeeG, boilerMaxWaterMl) {
+  const id = 'custom_' + Date.now();
+  const cleanCoffee = parseFloat(Number(coffeeG).toFixed(1));
+  const cleanWater = Math.round(Number(boilerMaxWaterMl));
+
+  // Автоматический расчет рабочей физики вокруг введенных замеров
+  const defaultWaterMl = Math.round(cleanWater * 0.88);
+  const minCoffeeG = Math.max(4, parseFloat((cleanCoffee * 0.75).toFixed(1)));
+  const maxCoffeeG = parseFloat((cleanCoffee * 1.25).toFixed(1));
+  const minWaterMl = Math.max(20, Math.round(cleanWater * 0.45));
+
+  const newMoka = {
+    id,
+    cups: id,
+    name: name.trim() || `Мока ${cleanCoffee}г`,
+    boilerMaxWaterMl: cleanWater,
+    defaultWaterMl,
+    defaultCoffeeG: cleanCoffee,
+    minCoffeeG,
+    maxCoffeeG,
+    minWaterMl,
+    isCustom: true
+  };
+
+  try {
+    const raw = localStorage.getItem(CUSTOM_MOKAS_STORAGE_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    list.push(newMoka);
+    localStorage.setItem(CUSTOM_MOKAS_STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error('Ошибка сохранения кастомной кофеварки:', e);
+  }
+
+  loadCustomMokasIntoCatalog();
+  return newMoka;
+}
+
+export function deleteCustomMokaFromCatalog(id) {
+  try {
+    const raw = localStorage.getItem(CUSTOM_MOKAS_STORAGE_KEY);
+    if (!raw) return;
+    const list = JSON.parse(raw).filter(item => item.id !== id);
+    localStorage.setItem(CUSTOM_MOKAS_STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.error('Ошибка удаления кастомной кофеварки:', e);
+  }
+  loadCustomMokasIntoCatalog();
+}
+
+// Загружаем кастомные профили сразу при инициализации модуля
+loadCustomMokasIntoCatalog();
 
 // 2. МАТРИЦА КОФЕЙНЫХ НАПИТКОВ
 export const DRINKS = {

@@ -16,20 +16,40 @@ export function renderDrinkSelector() {
 
 export function renderMokaSizeButtons() {
   const container = document.getElementById('moka-size-grid');
-  container.innerHTML = Object.values(MOKA_SIZES).map(s => {
-    const active = s.cups === state.mokaSize ? 'active' : '';
+
+  const sizeCardsHtml = Object.values(MOKA_SIZES).map(s => {
+    const active = String(s.cups) === String(state.mokaSize) ? 'active' : '';
+    const deleteBtnHtml = s.isCustom
+      ? `<span onclick="event.stopPropagation(); removeCustomMoka('${s.id}')"
+               title="Удалить профиль"
+               class="absolute top-1 right-1.5 text-[11px] font-bold text-slate-400 hover:text-red-600 px-1">✕</span>`
+      : '';
+
     return `
-      <button onclick="selectMokaSize(${s.cups})" class="tile-btn ${active} p-2.5 text-center">
-        <div class="text-xs font-extrabold text-[#0f2942]">${s.name}</div>
-        <div class="text-[11px] font-mono-num font-bold text-sky-700">${s.totalVolumeMl} мл</div>
-        <div class="text-[10px] text-[#4a6b82]">${s.heightCm} × ${s.baseWidthCm} см</div>
+      <button onclick="selectMokaSize('${s.cups}')" class="tile-btn ${active} p-2.5 text-center relative flex flex-col justify-center">
+        ${deleteBtnHtml}
+        <div class="text-xs font-extrabold text-[#0f2942] truncate px-2">${s.name}</div>
+        <div class="text-[11px] font-mono-num font-bold text-amber-800 mt-0.5">Воронка: ${s.defaultCoffeeG} г</div>
+        <div class="text-[10px] font-mono-num font-semibold text-sky-700">Бойлер: ${s.boilerMaxWaterMl} мл</div>
       </button>
     `;
   }).join('');
+
+  // Кнопка добавления своей кофеварки в том же стиле .tile-btn
+  const addCustomBtnHtml = `
+    <button onclick="openCustomMokaModal()"
+            class="tile-btn p-2.5 text-center flex flex-col items-center justify-center border-dashed border-2 border-sky-400/80 hover:border-sky-500">
+      <div class="text-base font-extrabold text-sky-700 leading-none">+</div>
+      <div class="text-xs font-extrabold text-[#0f2942] mt-1">Своя Мока</div>
+      <div class="text-[10px] font-semibold text-sky-700">Калибровка г / мл</div>
+    </button>
+  `;
+
+  container.innerHTML = sizeCardsHtml + addCustomBtnHtml;
 }
 
-export function syncSlidersToSize(cups) {
-  const sizeObj = MOKA_SIZES[cups];
+export function syncSlidersToSize(cupsKey) {
+  const sizeObj = MOKA_SIZES[cupsKey] || MOKA_SIZES['2'];
   const cSlider = document.getElementById('coffee-slider');
   const wSlider = document.getElementById('water-slider');
 
@@ -48,7 +68,7 @@ export function syncSlidersToSize(cups) {
 }
 
 export function updateUI() {
-  const sizeObj = MOKA_SIZES[state.mokaSize];
+  const sizeObj = MOKA_SIZES[state.mokaSize] || MOKA_SIZES['2'];
   const drinkObj = DRINKS[state.drinkId];
 
   // Поля ввода и слайдеры
@@ -57,10 +77,11 @@ export function updateUI() {
   document.getElementById('water-input').value = state.waterMl;
   document.getElementById('water-slider').value = state.waterMl;
 
-  // Бейджи выбранного напитка и габаритов
+  // Бейджи выбранного напитка и параметров профиля (без сантиметров)
   document.getElementById('selected-drink-badge').textContent = drinkObj.name;
   document.getElementById('protocol-drink-badge').textContent = drinkObj.name;
-  document.getElementById('moka-dimensions-badge').textContent = `${sizeObj.heightCm.toFixed(1)} см × Ø ${sizeObj.baseWidthCm.toFixed(1)} см`;
+  document.getElementById('moka-capacity-badge').textContent =
+    `Воронка: ${sizeObj.defaultCoffeeG} г | Клапан: ${sizeObj.boilerMaxWaterMl} мл`;
 
   // Расчет коэффициента и выхода базы
   const ratio = state.waterMl / state.coffeeG;
@@ -122,12 +143,12 @@ export function updateUI() {
     tempBadge.className = 'font-mono-num font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300';
   }
 
-  // 3. РАСЧЕТ ЩЕЛЧКОВ КОФЕМОЛКИ
+  // 3. РАСЧЕТ ЩЕЛЧКОВ КОФЕМОЛКИ (Адаптация под крупную воронку от 24 г кофе)
   const grinder = GRINDERS[state.grinderId];
   let recommendedClicks = grinder.baseClicks;
   if (state.roastId === 'light_arabica') recommendedClicks -= 1;
   if (state.roastId === 'dark_italian') recommendedClicks += 1;
-  if (state.mokaSize >= 6) recommendedClicks += 1;
+  if (sizeObj.defaultCoffeeG >= 24) recommendedClicks += 1;
   if (state.usePaperFilter) recommendedClicks += 1;
 
   document.getElementById('grinder-clicks-Main').textContent =
@@ -135,10 +156,9 @@ export function updateUI() {
   document.getElementById('grind-micron-badge').textContent =
     state.usePaperFilter ? '~420–490 мкм (с фильтром)' : '~380–450 мкм';
 
-  // 4. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА МОКИ (Координаты предыдущего индекса: бойлер 214..328, клапан Y=229)
-  document.getElementById('svg-moka-title-badge').textContent = `${sizeObj.name} (${sizeObj.totalVolumeMl} мл)`;
-  document.getElementById('svg-dim-height').textContent = `${sizeObj.heightCm.toFixed(1)}СМ`;
-  document.getElementById('svg-dim-width').textContent = `Ø ${sizeObj.baseWidthCm.toFixed(1)} СМ`;
+  // 4. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА МОКИ
+  document.getElementById('svg-moka-title-badge').textContent =
+    `${sizeObj.name} (${sizeObj.defaultCoffeeG} г / ${sizeObj.boilerMaxWaterMl} мл)`;
 
   const boilerBottomY = 328;
   const valveLineY = 229;
@@ -154,7 +174,7 @@ export function updateUI() {
   waterSurfaceLine.setAttribute('y2', waterTopY);
   document.getElementById('svg-water-label').textContent = `${state.waterMl} МЛ (~20°C)`;
 
-  // Корзина с молотым кофе (Y от 184 до 238, высота 54px) + зона пустоты сверху
+  // Корзина с молотым кофе + зона пустоты сверху
   const basketBottomY = 238;
   const maxBasketHeight = 54;
   const coffeeFillRatio = Math.min(1, state.coffeeG / sizeObj.defaultCoffeeG);
@@ -176,7 +196,7 @@ export function updateUI() {
     paperFilterSvg.classList.add('hidden');
   }
 
-  // Выход кофе в верхней чаше (Y от 182 вниз, макс высота ~86px)
+  // Выход кофе в верхней чаше
   const upperBottomY = 182;
   const maxUpperHeight = 86;
   const yieldRatio = Math.min(1.0, yieldMl / (sizeObj.boilerMaxWaterMl * 0.85));
@@ -188,7 +208,7 @@ export function updateUI() {
   document.getElementById('svg-upper-crema').setAttribute('y', upperTopY - 4);
   document.getElementById('svg-yield-label').textContent = `БАЗА: ~${yieldMl} МЛ`;
 
-  // 5. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА ИТОГОВОЙ ЧАШКИ (Координаты предыдущего индекса: дно 308, макс 215px)
+  // 5. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА ИТОГОВОЙ ЧАШКИ
   document.getElementById('svg-cup-title-badge').textContent = drinkObj.name;
   document.getElementById('cup-total-top').textContent = `В ЧАШКЕ: ~${totalDrinkMl} МЛ`;
 

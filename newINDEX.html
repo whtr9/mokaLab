@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MokaLab — Термодинамика и пропорции гейзерного кофе</title>
+  <meta name="theme-color" content="#0288d1" />
+  <link rel="manifest" href="./manifest.json" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-main: #0f2942;
+      --text-muted: #4a6b82;
+      --aero-blue: #0288d1;
+      --aero-cyan: #00b0ff;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 32%),
+        radial-gradient(circle at 86% 12%, rgba(128, 216, 255, 0.55) 0%, rgba(128, 216, 255, 0) 38%),
+        radial-gradient(circle at 78% 82%, rgba(185, 246, 202, 0.6) 0%, rgba(185, 246, 202, 0) 40%),
+        radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0) 30%),
+        linear-gradient(135deg, #e0f7fa 0%, #b3e5fc 45%, #dcedc8 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+      letter-spacing: -0.015em;
+    }
+
+    .font-mono-num {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Windows Aero Glass Cards */
+    .brutal-card {
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.48) 100%);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      box-shadow:
+        0 12px 32px rgba(14, 74, 117, 0.12),
+        inset 0 1px 1px rgba(255, 255, 255, 0.95);
+      position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .brutal-card-header {
+      border-radius: 20px 20px 0 0;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.88), rgba(240, 249, 255, 0.52));
+      border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* Aqua Gel Capsule Buttons */
+    .cta-btn {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      background: linear-gradient(180deg, #4fc3f7 0%, #0288d1 50%, #01579b 51%, #0277bd 100%);
+      border: 1px solid #01579b;
+      border-radius: 999px;
+      padding: 8px 16px;
+      box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.85),
+        0 4px 12px rgba(2, 136, 209, 0.28);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .cta-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 2px 4px rgba(255, 255, 255, 0.95),
+        0 6px 16px rgba(2, 136, 209, 0.4);
+    }
+
+    .cta-btn:active {
+      transform: translateY(0);
+    }
+
+    .cta-btn-green {
+      background: linear-gradient(180deg, #69f0ae 0%, #00c853 50%, #2e7d32 51%, #00e676 100%);
+      border-color: #1b5e20;
+      box-shadow:
+        inset 0 2px 3px rgba(255, 255, 255, 0.85),
+        0 4px 12px rgba(0, 200, 83, 0.28);
+    }
+
+    /* Selection Tiles */
+    .tile-btn {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0.58) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 14px;
+      box-shadow:
+        0 4px 10px rgba(14, 74, 117, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+
+    .tile-btn:hover {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(225, 245, 254, 0.75) 100%);
+      border-color: #81d4fa;
+      transform: translateY(-1px);
+    }
+
+    .tile-btn.active {
+      border: 2px solid #00b0ff;
+      background: linear-gradient(180deg, rgba(225, 245, 254, 0.96) 0%, rgba(179, 229, 252, 0.88) 100%);
+      box-shadow:
+        0 6px 16px rgba(0, 176, 255, 0.22),
+        inset 0 1px 2px rgba(255, 255, 255, 0.95);
+    }
+
+    /* Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      background: linear-gradient(90deg, #b3e5fc 0%, #4fc3f7 50%, #81c784 100%);
+      border-radius: 999px;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffffff 0%, #e1f5fe 35%, #0288d1 80%, #01579b 100%);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(1, 87, 155, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.1);
+    }
+
+    .terminal-input {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #b3e5fc;
+      border-radius: 10px;
+      color: #0f2942;
+      box-shadow: inset 0 1px 2px rgba(14, 74, 117, 0.08);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .terminal-input:focus {
+      border-color: #00b0ff;
+      box-shadow: 0 0 0 3px rgba(0, 176, 255, 0.2);
+    }
+
+    .svg-transition {
+      transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+  </style>
+</head>
+<body class="pb-16">
+
+  <!-- ВЕРХНЯЯ НАВИГАЦИЯ -->
+  <header class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-4">
+    <div class="brutal-card px-5 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl flex items-center justify-center shadow-md border border-white/90"
+             style="background: linear-gradient(145deg, #4fc3f7 0%, #0288d1 60%, #26c6da 100%);">
+          <svg class="w-6 h-6 text-white drop-shadow" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 3h8l-1 6H9L8 3zM7 9h10l2 10H5L7 9zM17 11h2a2 2 0 012 2v2a2 2 0 01-2 2h-1.5" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-[#0f2942] tracking-tight">MokaLab</h1>
+            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-sky-100/90 text-sky-800 border border-sky-300/80 shadow-sm">
+              Physics Edition v2.4
+            </span>
+          </div>
+          <p class="text-xs sm:text-sm text-[#4a6b82] font-medium">
+            Лаборатория экстракции, термодинамики и пропорций гейзерной кофеварки
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button id="pwa-install-btn" class="cta-btn cta-btn-green hidden">
+          Установить приложение
+        </button>
+        <button onclick="resetToDefaultStandard()" class="cta-btn">
+          Сбросить к эталону
+        </button>
+        <button onclick="openSavePresetModal()" class="cta-btn">
+          Сохранить рецепт
+        </button>
+        <button onclick="openJsonModal()" class="cta-btn">
+          Экспорт / JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- Панель сохраненных пресетов -->
+    <div id="saved-presets-bar" class="mt-3 hidden"></div>
+  </header>
+
+  <!-- ОСНОВНАЯ СЕТКА -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- ЛЕВАЯ КОЛОНКА (НАСТРОЙКИ И УПРАВЛЕНИЕ: 5 колонок) -->
+    <div class="lg:col-span-5 space-y-6">
+
+      <!-- КАРТОЧКА 01: ВЫБОР НАПИТКА И КАЛИБРА МОКИ -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">01</span>
+            <h2 class="font-bold text-base text-[#0f2942]">Целевой напиток и размер Моки</h2>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/80 text-sky-700 border border-sky-200">
+            Bialetti Metric
+          </span>
+        </div>
+
+        <div class="p-5 space-y-5">
+          <!-- Выбор напитка -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-[#4a6b82]">Выберите кофейный напиток</label>
+              <span id="selected-drink-badge" class="text-xs font-bold text-sky-700 bg-sky-100/80 px-2.5 py-0.5 rounded-full border border-sky-200">
+                Эспрессо (Мока)
+              </span>
+            </div>
+            <div id="drink-selector-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
+          </div>
+
+          <!-- Выбор калибра гейзерной кофеварки -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-[#4a6b82]">Размер гейзерной кофеварки</label>
+              <span id="moka-dimensions-badge" class="text-xs font-mono-num font-semibold text-amber-900 bg-amber-100/80 px-2.5 py-0.5 rounded-full border border-amber-300/80">
+                14.5 см × 8.0 см
+              </span>
+            </div>
+            <div id="moka-size-grid" class="grid grid-cols-3 gap-2.5"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- КАРТОЧКА 02: КАЛЬКУЛЯТОР ПРОПОРЦИЙ И ТЕРМОДИНАМИКИ -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">02</span>
+            <h2 class="font-bold text-base text-[#0f2942]">Дозировка, уровень воды и температура</h2>
+          </div>
+          <button id="lock-ratio-btn" onclick="toggleRatioLock()"
+                  class="text-xs font-bold px-3 py-1 rounded-full bg-white/85 border border-sky-300 text-sky-800 shadow-sm hover:bg-sky-50 transition">
+            🔓 Ratio свободно
+          </button>
+        </div>
+
+        <div class="p-5 space-y-5">
+          <!-- Ползунок Кофе (с контролем заполнения корзины без пустот) -->
+          <div class="bg-white/60 border border-white/80 rounded-2xl p-4 shadow-sm space-y-2.5">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-sm font-bold text-[#0f2942]">Молотый кофе в корзине</span>
+                <p class="text-xs text-[#4a6b82]">Заполняйте до краев без темперовки</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <input id="coffee-input" type="number" step="0.5" min="4" max="55"
+                       class="terminal-input w-20 px-2.5 py-1 text-right font-mono-num font-bold text-sm"
+                       oninput="handleManualCoffeeInput(this.value)" />
+                <span class="text-xs font-bold text-[#4a6b82]">г</span>
+              </div>
+            </div>
+
+            <input id="coffee-slider" type="range" min="4" max="55" step="0.5"
+                   oninput="handleCoffeeSlider(this.value)" />
+
+            <div class="flex justify-between items-center text-[11px] text-[#4a6b82] pt-1">
+              <span>Мин: <b id="coffee-min-label" class="font-mono-num">8 г</b></span>
+              <span id="basket-fill-badge" class="px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300">
+                Корзина заполнена на 100% (Без пустот)
+              </span>
+              <span>Макс: <b id="coffee-max-label" class="font-mono-num">15 г</b></span>
+            </div>
+            <!-- Предупреждение о пустоте в корзине (Headspace Warning) -->
+            <p id="basket-headspace-hint" class="text-[11px] leading-relaxed text-[#4a6b82] pt-1 border-t border-sky-100">
+              Дозировка соответствует объему воронки: пустоты под верхним фильтром нет, вода пойдет равномерно без бульканья.
+            </p>
+          </div>
+
+          <!-- Ползунок Воды (с термодинамическим контролем температуры) -->
+          <div class="bg-white/60 border border-white/80 rounded-2xl p-4 shadow-sm space-y-2.5">
+            <div class="flex justify-between items-center">
+              <div>
+                <span class="text-sm font-bold text-[#0f2942]">Вода в бойлере (~20°C)</span>
+                <p class="text-xs text-[#4a6b82]">Уровень воды регулирует температуру варки</p>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <input id="water-input" type="number" step="1" min="20" max="450"
+                       class="terminal-input w-20 px-2.5 py-1 text-right font-mono-num font-bold text-sm"
+                       oninput="handleManualWaterInput(this.value)" />
+                <span class="text-xs font-bold text-[#4a6b82]">мл</span>
+              </div>
+            </div>
+
+            <input id="water-slider" type="range" min="20" max="450" step="1"
+                   oninput="handleWaterSlider(this.value)" />
+
+            <div class="flex justify-between items-center text-[11px] text-[#4a6b82] pt-1">
+              <span>Мин: <b id="water-min-label" class="font-mono-num">30 мл</b></span>
+              <span id="safety-badge" class="px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 border border-emerald-400 text-emerald-800">
+                Ниже клапана (Норма)
+              </span>
+              <span>Клапан: <b id="water-valve-label" class="font-mono-num">80 мл</b></span>
+            </div>
+
+            <!-- Индикатор температуры заваривания от уровня воды -->
+            <div class="mt-2 pt-2 border-t border-sky-100 flex items-center justify-between text-xs">
+              <span class="text-[#4a6b82] font-medium">Профиль температуры от уровня воды:</span>
+              <span id="water-temp-profile-badge" class="font-mono-num font-bold text-sky-800 bg-sky-100/80 px-2.5 py-0.5 rounded-full border border-sky-200">
+                Сбалансированный (~93–96°C)
+              </span>
+            </div>
+            <p id="water-temp-hint" class="text-[11px] text-[#4a6b82] leading-relaxed">
+              Чем выше уровень воды (до клапана), тем выше начальная и конечная температура. Если кофе горчит в конце — убавьте воду на 5–10 мл.
+            </p>
+          </div>
+
+          <!-- Сводная плашка коэффициента и выхода -->
+          <div class="grid grid-cols-3 gap-2.5 text-center">
+            <div class="bg-white/65 border border-white/85 rounded-xl p-2.5 shadow-sm">
+              <div class="text-[11px] font-semibold text-[#4a6b82]">Коэффициент</div>
+              <div id="summary-ratio" class="text-base font-mono-num font-bold text-sky-700 mt-0.5">1 : 5.8</div>
+            </div>
+            <div class="bg-white/65 border border-white/85 rounded-xl p-2.5 shadow-sm">
+              <div class="text-[11px] font-semibold text-[#4a6b82]">Выход базы</div>
+              <div id="summary-yield" class="text-base font-mono-num font-bold text-amber-800 mt-0.5">46 мл</div>
+            </div>
+            <div class="bg-white/65 border border-white/85 rounded-xl p-2.5 shadow-sm">
+              <div class="text-[11px] font-semibold text-[#4a6b82]">Итого в чашке</div>
+              <div id="summary-total-drink" class="text-base font-mono-num font-bold text-emerald-700 mt-0.5">46 мл</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- КАРТОЧКА 03: КОФЕМОЛКА, ДАВЛЕНИЕ И АЭРОПРЕСС-ФИЛЬТР -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">03</span>
+            <h2 class="font-bold text-base text-[#0f2942]">Помол, сопротивление и фильтр</h2>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/80 text-amber-800 border border-amber-200">
+            Контроль давления
+          </span>
+        </div>
+
+        <div class="p-5 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-[#4a6b82] mb-1.5">Модель кофемолки</label>
+              <select id="grinder-select" onchange="handleGrinderChange(this.value)"
+                      class="terminal-input w-full px-3 py-2 text-xs font-semibold">
+                <option value="timemore_c3">Timemore C3 / C3S Pro (S2C)</option>
+                <option value="1zpresso_q2">1Zpresso Q2 / JX</option>
+                <option value="comandante_c40">Comandante C40 MK4</option>
+                <option value="kingrinder_k6">KINGrinder K6</option>
+                <option value="baratza_encore">Baratza Encore ESP</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-[#4a6b82] mb-1.5">Обжарка и состав зерна</label>
+              <select id="roast-select" onchange="handleRoastChange(this.value)"
+                      class="terminal-input w-full px-3 py-2 text-xs font-semibold">
+                <option value="medium_blend">Средняя / Бленд 80/20 (Классика)</option>
+                <option value="light_arabica">Светлая / 100% Арабика (Фрукты)</option>
+                <option value="dark_italian">Темная итальянская обжарка</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Переключатель бумажного фильтра AeroPress -->
+          <label class="flex items-start gap-3 p-3.5 rounded-2xl bg-white/70 border border-white/90 shadow-sm cursor-pointer hover:bg-white/90 transition">
+            <input id="paper-filter-checkbox" type="checkbox" onchange="togglePaperFilter(this.checked)"
+                   class="mt-1 w-4 h-4 accent-sky-600 rounded cursor-pointer" />
+            <div class="text-xs">
+              <div class="font-bold text-[#0f2942] flex items-center gap-2">
+                <span>Использовать бумажный фильтр (AeroPress) поверх корзины</span>
+                <span class="px-2 py-0.5 text-[10px] rounded-full bg-sky-100 text-sky-800 font-semibold border border-sky-200">Опционально</span>
+              </div>
+              <p class="text-[#4a6b82] mt-0.5 leading-relaxed">
+                Делает чашку чище, повышает равномерность экстракции и создает дополнительное сопротивление (позволяет сделать помол на <b>+1 щелчок крупнее</b> без потери давления).
+              </p>
+            </div>
+          </label>
+
+          <!-- Вывод рекомендуемых кликов и физики помола -->
+          <div class="bg-white/65 border border-white/85 rounded-2xl p-4 shadow-sm space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-xs font-bold text-[#4a6b82]">Рекомендация для выбранной конфигурации</div>
+                <div id="grinder-clicks-Main" class="text-lg font-mono-num font-extrabold text-sky-800 mt-0.5">
+                  15 щелчков (диапазон 14–16)
+                </div>
+              </div>
+              <div id="grind-micron-badge" class="px-3 py-1 rounded-full bg-amber-100/90 border border-amber-300 text-amber-900 font-mono-num text-xs font-bold">
+                ~380–450 мкм
+              </div>
+            </div>
+            <p class="text-[11px] text-[#4a6b82] leading-relaxed pt-1 border-t border-sky-100">
+              <b>Физика помола:</b> чем мельче помол, тем сильнее «закрыта» система — растут давление и температура воды. Чем крупнее помол, тем прохладнее экстракция, но при слишком крупном помоле таблетка потеряет герметичность и сквозь кофе прорвется кипяток.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА (ТЕХНИЧЕСКИЙ РАЗРЕЗ, ПРАВИЛА ФИЗИКИ И ПРОТОКОЛ: 7 колонок) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- КАРТОЧКА 04: ИНТЕРАКТИВНЫЙ ТЕХНИЧЕСКИЙ РАЗРЕЗ (МОКА И ЧАШКА) -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">04</span>
+            <h2 class="font-bold text-base text-[#0f2942]">Интерактивный разрез: Гейзерная кофеварка и Чашка</h2>
+          </div>
+          <span id="active-preset-pill" class="text-xs font-bold px-3 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300">
+            Эталон: 12 г / 70 мл
+          </span>
+        </div>
+
+        <div class="p-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+
+            <!-- ЧЕРТЕЖ А: ГЕЙЗЕРНАЯ КОФЕВАРКА В РАЗРЕЗЕ -->
+            <div class="bg-white/55 border border-white/85 rounded-2xl p-4 shadow-sm flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-2 text-xs font-bold text-[#0f2942]">
+                <span>А. Разрез Мока-пота</span>
+                <span id="svg-moka-title-badge" class="text-sky-700 font-mono-num">2 чашки (90 мл)</span>
+              </div>
+
+              <svg viewBox="0 0 260 340" class="w-full max-w-[260px] h-auto overflow-visible">
+                <defs>
+                  <!-- Металлический корпус полированного алюминия -->
+                  <linearGradient id="silverMetal" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#d7dde2" />
+                    <stop offset="22%" stop-color="#f8fafc" />
+                    <stop offset="50%" stop-color="#9aa5b1" />
+                    <stop offset="78%" stop-color="#e2e8f0" />
+                    <stop offset="100%" stop-color="#7b8794" />
+                  </linearGradient>
+
+                  <!-- Градиент натурального эспрессо -->
+                  <linearGradient id="realCoffeeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#4e2a14" />
+                    <stop offset="100%" stop-color="#261206" />
+                  </linearGradient>
+
+                  <!-- Кристально-чистая голубая вода Frutiger Aero -->
+                  <linearGradient id="aeroWaterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="rgba(56, 189, 248, 0.50)" />
+                    <stop offset="100%" stop-color="rgba(2, 132, 199, 0.82)" />
+                  </linearGradient>
+
+                  <!-- Текстура молотого кофе -->
+                  <pattern id="groundsHatch" width="6" height="6" patternUnits="userSpaceOnUse">
+                    <rect width="6" height="6" fill="#4a2c18" />
+                    <circle cx="2" cy="2" r="1" fill="#2e190c" />
+                    <circle cx="5" cy="4" r="1.1" fill="#6b3e23" />
+                  </pattern>
+                </defs>
+
+                <!-- Размерная линия высоты слева -->
+                <g stroke="#64748b" stroke-width="1">
+                  <line x1="22" y1="30" x2="22" y2="300" stroke-dasharray="3,3" />
+                  <line x1="17" y1="30" x2="27" y2="30" />
+                  <line x1="17" y1="300" x2="27" y2="300" />
+                </g>
+                <rect x="2" y="152" width="44" height="18" rx="6" fill="rgba(255,255,255,0.88)" stroke="#cbd5e1" />
+                <text id="svg-dim-height" x="24" y="164" text-anchor="middle" class="font-mono-num text-[9px] font-bold fill-[#0f2942]">14.5 см</text>
+
+                <!-- Пипка крышки (черный бакелит) -->
+                <polygon points="118,16 142,16 137,30 123,30" fill="#1e293b" stroke="#0f172a" stroke-width="1.5" />
+                <!-- Крышка -->
+                <polygon points="72,44 188,44 176,30 84,30" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.8" />
+
+                <!-- Ручка из черного бакелита -->
+                <path d="M 188,58 L 222,58 Q 236,58 234,76 L 226,144 Q 224,158 210,152 L 194,142 L 197,132 L 210,138 Q 215,140 216,132 L 222,76 Q 222,68 214,68 L 185,68 Z"
+                      fill="#1e293b" stroke="#0f172a" stroke-width="1.5" />
+
+                <!-- ВЕРХНЯЯ ЧАША (Кувшин) -->
+                <polygon points="68,44 192,44 176,162 84,162" fill="url(#silverMetal)" stroke="#64748b" stroke-width="2" />
+                <!-- Внутренняя полость верхней чаши -->
+                <polygon points="75,48 185,48 171,158 89,158" fill="rgba(255,255,255,0.68)" stroke="#94a3b8" stroke-width="1" />
+
+                <!-- Готовый кофе в верхней чаше -->
+                <rect id="svg-upper-coffee" class="svg-transition" x="86" y="124" width="88" height="34" fill="url(#realCoffeeGrad)" fill-opacity="0.92" rx="2" />
+                <!-- Слой крема в верхней чаше -->
+                <rect id="svg-upper-crema" class="svg-transition" x="85" y="120" width="90" height="4" fill="#d49b54" rx="1.5" />
+
+                <!-- Центральная колонка (гейзерный ствол) -->
+                <polygon points="124,72 136,72 140,162 120,162" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
+                <!-- Потоки экстракции -->
+                <path d="M 127,72 Q 112,60 102,95" fill="none" stroke="#8c4a27" stroke-width="2" stroke-dasharray="3,3" />
+                <path d="M 133,72 Q 148,60 158,95" fill="none" stroke="#8c4a27" stroke-width="2" stroke-dasharray="3,3" />
+
+                <!-- НИЖНИЙ БОЙЛЕР -->
+                <polygon points="84,162 176,162 198,298 62,298" fill="url(#silverMetal)" stroke="#64748b" stroke-width="2" />
+                <!-- Внутренняя камера бойлера -->
+                <polygon points="90,166 170,166 190,292 70,292" fill="rgba(240,249,255,0.78)" stroke="#94a3b8" stroke-width="1" />
+
+                <!-- Вода в нижнем бойлере (Комнатная ~20°C) -->
+                <rect id="svg-boiler-water" class="svg-transition" x="74" y="232" width="112" height="60"
+                      fill="url(#aeroWaterGrad)" stroke="#0284c7" stroke-width="1.5" rx="2" />
+
+                <!-- Трубка воронки до дна бойлера -->
+                <rect x="126" y="212" width="8" height="74" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.2" />
+
+                <!-- КОРЗИНА ДЛЯ КОФЕ (Воронка) -->
+                <polygon points="94,166 166,166 158,212 102,212" fill="rgba(255,255,255,0.82)" stroke="#475569" stroke-width="1.8" />
+
+                <!-- Предупреждающая зона пустоты (Headspace), если кофе недосыпан -->
+                <rect id="svg-headspace-void" class="svg-transition" x="97" y="168" width="66" height="0"
+                      fill="rgba(245, 158, 11, 0.28)" stroke="#d97706" stroke-width="1" stroke-dasharray="2,2" />
+
+                <!-- Молотый кофе в корзине -->
+                <rect id="svg-coffee-grounds-solid" class="svg-transition" x="98" y="168" width="64" height="42"
+                      fill="#4a2c18" fill-opacity="0.88" />
+                <rect id="svg-coffee-grounds" class="svg-transition" x="98" y="168" width="64" height="42"
+                      fill="url(#groundsHatch)" fill-opacity="0.85" />
+
+                <!-- Опциональный бумажный фильтр AeroPress поверх корзины -->
+                <rect id="svg-paper-filter" x="94" y="163" width="72" height="3.5" rx="1.5"
+                      fill="#ffffff" stroke="#0284c7" stroke-width="1.2" class="hidden" />
+
+                <!-- Клапан безопасности (Латунный) -->
+                <line x1="72" y1="220" x2="188" y2="220" stroke="#dc2626" stroke-width="1" stroke-dasharray="3,3" />
+                <circle id="svg-valve-icon" cx="83" cy="220" r="5.5" fill="#eab308" stroke="#854d0e" stroke-width="1.5" />
+
+                <!-- Информационные бейджи на чертеже Моки -->
+                <rect x="92" y="92" width="76" height="19" rx="6" fill="rgba(255,255,255,0.9)" stroke="#cbd5e1" />
+                <text id="svg-yield-label" x="130" y="105" text-anchor="middle" class="font-mono-num text-[9.5px] font-bold fill-[#4e2a14]">
+                  Выход: 46 мл
+                </text>
+
+                <rect x="95" y="181" width="70" height="18" rx="6" fill="rgba(255,255,255,0.92)" stroke="#d97706" />
+                <text id="svg-coffee-label" x="130" y="193" text-anchor="middle" class="font-mono-num text-[9.5px] font-bold fill-[#4a2c18]">
+                  12.0 г кофе
+                </text>
+
+                <rect x="85" y="255" width="90" height="19" rx="6" fill="rgba(255,255,255,0.92)" stroke="#38bdf8" />
+                <text id="svg-water-label" x="130" y="268" text-anchor="middle" class="font-mono-num text-[9.5px] font-bold fill-[#0369a1]">
+                  70 мл (~20°C)
+                </text>
+
+                <!-- Размерная линия ширины базы внизу -->
+                <g stroke="#64748b" stroke-width="1">
+                  <line x1="62" y1="314" x2="198" y2="314" stroke-dasharray="3,3" />
+                  <line x1="62" y1="309" x2="62" y2="319" />
+                  <line x1="198" y1="309" x2="198" y2="319" />
+                </g>
+                <rect x="102" y="305" width="56" height="18" rx="6" fill="rgba(255,255,255,0.88)" stroke="#cbd5e1" />
+                <text id="svg-dim-width" x="130" y="317" text-anchor="middle" class="font-mono-num text-[9px] font-bold fill-[#0f2942]">Ø 8.0 см</text>
+              </svg>
+            </div>
+
+            <!-- ЧЕРТЕЖ Б: ИТОГОВАЯ ЧАШКА НАПИТКА -->
+            <div class="bg-white/55 border border-white/85 rounded-2xl p-4 shadow-sm flex flex-col items-center">
+              <div class="w-full flex justify-between items-center mb-2 text-xs font-bold text-[#0f2942]">
+                <span>Б. Слои в чашке</span>
+                <span id="svg-cup-title-badge" class="text-amber-800 font-mono-num">Эспрессо (Мока)</span>
+              </div>
+
+              <svg viewBox="0 0 260 340" class="w-full max-w-[260px] h-auto overflow-visible">
+                <defs>
+                  <pattern id="milkDots" width="8" height="8" patternUnits="userSpaceOnUse">
+                    <rect width="8" height="8" fill="#fffdf7" />
+                    <circle cx="3" cy="3" r="1" fill="#e6dec8" />
+                  </pattern>
+                </defs>
+
+                <!-- Ручка стеклянной чашки -->
+                <path d="M 196,118 H 218 Q 236,118 236,142 V 192 Q 236,216 218,216 H 192"
+                      fill="none" stroke="#94a3b8" stroke-width="8" stroke-linecap="round" />
+                <path d="M 196,118 H 218 Q 236,118 236,142 V 192 Q 236,216 218,216 H 192"
+                      fill="none" stroke="#e2e8f0" stroke-width="3.5" stroke-linecap="round" />
+
+                <!-- Контур прозрачной стеклянной чашки -->
+                <rect x="56" y="84" width="144" height="186" rx="22"
+                      fill="rgba(255, 255, 255, 0.58)" stroke="#94a3b8" stroke-width="3" />
+
+                <!-- Слой микропены (верхний) -->
+                <rect id="cup-layer-foam" class="svg-transition" x="60" y="200" width="136" height="0"
+                      fill="#ffffff" fill-opacity="0.96" rx="4" />
+
+                <!-- Слой молока или горячей воды (средний) -->
+                <rect id="cup-layer-modifier-bg" class="svg-transition" x="60" y="200" width="136" height="0"
+                      fill="#fffdf7" fill-opacity="0.92" />
+                <rect id="cup-layer-modifier-pattern" class="svg-transition" x="60" y="200" width="136" height="0"
+                      fill="url(#milkDots)" fill-opacity="0.7" />
+
+                <!-- Слой кофейной базы (нижний) -->
+                <rect id="cup-layer-coffee" class="svg-transition" x="60" y="204" width="136" height="62"
+                      fill="url(#realCoffeeGrad)" fill-opacity="0.94" rx="14" />
+                <!-- Слой ореховой крема поверх кофе -->
+                <rect id="cup-layer-crema" class="svg-transition" x="60" y="200" width="136" height="4"
+                      fill="#d49b54" />
+
+                <!-- Подписи слоев чашки -->
+                <g id="cup-foam-badge-group" class="hidden">
+                  <rect x="74" y="102" width="108" height="19" rx="6" fill="rgba(255,255,255,0.94)" stroke="#cbd5e1" />
+                  <text id="cup-foam-label" x="128" y="115" text-anchor="middle" class="font-mono-num text-[9.5px] font-bold fill-[#334155]">
+                    Пена: 0 мл
+                  </text>
+                </g>
+
+                <g id="cup-modifier-badge-group" class="hidden">
+                  <rect x="70" y="148" width="116" height="19" rx="6" fill="rgba(255,255,255,0.94)" stroke="#93c5fd" />
+                  <text id="cup-modifier-label" x="128" y="161" text-anchor="middle" class="font-mono-num text-[9.5px] font-bold fill-[#0369a1]">
+                    Молоко: 0 мл
+                  </text>
+                </g>
+
+                <rect x="72" y="226" width="112" height="20" rx="6" fill="rgba(255,255,255,0.92)" stroke="#d97706" />
+                <text id="cup-coffee-label" x="128" y="239" text-anchor="middle" class="font-mono-num text-[9.5px] font-bold fill-[#4e2a14]">
+                  Кофе-база: 46 мл
+                </text>
+
+                <!-- Блюдце под чашкой -->
+                <ellipse cx="128" cy="276" rx="88" ry="8" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
+
+                <!-- Итоговый объем внизу -->
+                <rect x="68" y="296" width="120" height="22" rx="8" fill="rgba(255,255,255,0.9)" stroke="#86efac" />
+                <text id="cup-total-badge" x="128" y="310" text-anchor="middle" class="font-mono-num text-[10px] font-extrabold fill-[#065f46]">
+                  Итого в чашке: 46 мл
+                </text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- КАРТОЧКА 05: ФИЗИКА ЭКСТРАКЦИИ И РАЗРУШЕНИЕ МИФОВ -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shadow-sm">05</span>
+            <h2 class="font-bold text-base text-[#0f2942]">Физика экстракции в Моке (7 главных правил)</h2>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300">
+            Научный подход
+          </span>
+        </div>
+
+        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+          <div class="bg-white/65 border border-white/90 rounded-2xl p-3.5 shadow-sm">
+            <div class="font-bold text-sky-900 mb-1 flex items-center gap-1.5">
+              <span>💧 1. Вода комнатной температуры (~20°C)</span>
+            </div>
+            <p class="text-[#4a6b82] leading-relaxed">
+              Заливайте воду комнатной температуры, а не кипяток. Кипяток гарантирует скачок выше <b>100°C</b> к концу варки и резкую горечь. Кофе в корзине не «сгорит»: расширяющийся воздух и пар заранее увлажняют таблетку (как предсмачивание / блум в пуровере).
+            </p>
+          </div>
+
+          <div class="bg-white/65 border border-white/90 rounded-2xl p-3.5 shadow-sm">
+            <div class="font-bold text-sky-900 mb-1 flex items-center gap-1.5">
+              <span>🌡️ 2. Контроль температуры уровнем воды</span>
+            </div>
+            <p class="text-[#4a6b82] leading-relaxed">
+              Чем выше уровень воды в бойлере (до клапана), тем выше начальная и конечная температура заваривания. Если напиток горчит на финальной стадии — налейте на <b>5–15 мл меньше воды</b>.
+            </p>
+          </div>
+
+          <div class="bg-white/65 border border-white/90 rounded-2xl p-3.5 shadow-sm">
+            <div class="font-bold text-amber-900 mb-1 flex items-center gap-1.5">
+              <span>🧺 3. Заполняйте корзину до краев</span>
+            </div>
+            <p class="text-[#4a6b82] leading-relaxed">
+              Молотый кофе должен полностью заполнять воронку. Если недосыпать кофе, между ним и верхним фильтром возникнет пустота — системе потребуется лишняя энергия, и вода начнет неравномерно булькать.
+            </p>
+          </div>
+
+          <div class="bg-white/65 border border-white/90 rounded-2xl p-3.5 shadow-sm">
+            <div class="font-bold text-red-800 mb-1 flex items-center gap-1.5">
+              <span>🚫 4. Никогда не утрамбовывайте кофе</span>
+            </div>
+            <p class="text-[#4a6b82] leading-relaxed">
+              Не давите на кофе темпером или ложкой. Утрамбовка резко повышает сопротивление таблетки, заставляя систему задирать давление и температуру — в чашке будет жженый и едкий вкус.
+            </p>
+          </div>
+
+          <div class="bg-white/65 border border-white/90 rounded-2xl p-3.5 shadow-sm">
+            <div class="font-bold text-amber-900 mb-1 flex items-center gap-1.5">
+              <span>⚙️ 5. Баланс помола и герметичности</span>
+            </div>
+            <p class="text-[#4a6b82] leading-relaxed">
+              Мелкий помол «закрывает» систему (растут давление и температура). Крупный помол снижает температуру, но слишком крупный разрушит герметизацию таблетки — давление упадет, и пойдет кипящая вода.
+            </p>
+          </div>
+
+          <div class="bg-white/65 border border-white/90 rounded-2xl p-3.5 shadow-sm">
+            <div class="font-bold text-red-800 mb-1 flex items-center gap-1.5">
+              <span>🌋 6. Избегайте «Стромболианского эффекта»</span>
+            </div>
+            <p class="text-[#4a6b82] leading-relaxed">
+              Не допускайте вулканического фырканья и плевания паром в конце. Как только кофе активно пошел в верхнюю чашу, сильно убавьте или выключите нагрев — остаточного давления хватит для завершения экстракции.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- КАРТОЧКА 06: ПОШАГОВЫЙ ПРОТОКОЛ ПРИГОТОВЛЕНИЯ -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">06</span>
+            <h2 class="font-bold text-base text-[#0f2942]">Пошаговый протокол заваривания</h2>
+          </div>
+          <span id="protocol-drink-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/85 text-sky-800 border border-sky-200">
+            Эспрессо (Мока)
+          </span>
+        </div>
+
+        <div class="p-5">
+          <div id="protocol-steps-container" class="space-y-2.5"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- МОДАЛЬНОЕ ОКНО СОХРАНЕНИЯ РЕЦЕПТА -->
+  <div id="save-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="brutal-card max-w-md w-full overflow-hidden">
+      <div class="brutal-card-header">
+        <h3 class="font-bold text-base text-[#0f2942]">Сохранить собственный рецепт</h3>
+        <button onclick="closeSavePresetModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-[#4a6b82] mb-1">Название рецепта</label>
+          <input id="preset-name-input" type="text" placeholder="Например: Утренний Флэт 2-cup (Без горечи)"
+                 class="terminal-input w-full px-3 py-2 text-sm font-semibold" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="closeSavePresetModal()" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
+            Отмена
+          </button>
+          <button onclick="confirmSavePreset()" class="cta-btn cta-btn-green">
+            Сохранить в браузере
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО ЭКСПОРТА / ИМПОРТА JSON -->
+  <div id="json-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="brutal-card max-w-lg w-full overflow-hidden">
+      <div class="brutal-card-header">
+        <h3 class="font-bold text-base text-[#0f2942]">Экспорт и импорт конфигурации (JSON)</h3>
+        <button onclick="closeJsonModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <textarea id="json-textarea" rows="7"
+                  class="terminal-input w-full p-3 font-mono-num text-xs"></textarea>
+        <div class="flex justify-between items-center">
+          <button onclick="copyJsonToClipboard()" class="cta-btn">
+            Скопировать JSON
+          </button>
+          <div class="flex gap-2">
+            <button onclick="importJsonConfig()" class="cta-btn cta-btn-green">
+              Применить JSON
+            </button>
+            <button onclick="closeJsonModal()" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. ЛИНЕЙКА РАЗМЕРОВ BIALETTI MOKA EXPRESS (1, 2, 3, 4, 6, 9 чашек)
+    const MOKA_SIZES = {
+      1: {
+        cups: 1,
+        name: '1 чашка',
+        totalVolumeMl: 60,
+        heightCm: 13.5,
+        baseWidthCm: 7.0,
+        boilerMaxWaterMl: 55,
+        defaultWaterMl: 45,
+        defaultCoffeeG: 8.0,
+        minCoffeeG: 6.0,
+        maxCoffeeG: 10.0,
+        minWaterMl: 25
+      },
+      2: {
+        cups: 2,
+        name: '2 чашки',
+        totalVolumeMl: 90,
+        heightCm: 14.5,
+        baseWidthCm: 8.0,
+        boilerMaxWaterMl: 80,
+        defaultWaterMl: 70,
+        defaultCoffeeG: 12.0,
+        minCoffeeG: 9.0,
+        maxCoffeeG: 15.0,
+        minWaterMl: 35
+      },
+      3: {
+        cups: 3,
+        name: '3 чашки',
+        totalVolumeMl: 130,
+        heightCm: 16.0,
+        baseWidthCm: 9.0,
+        boilerMaxWaterMl: 120,
+        defaultWaterMl: 105,
+        defaultCoffeeG: 17.0,
+        minCoffeeG: 13.0,
+        maxCoffeeG: 20.0,
+        minWaterMl: 55
+      },
+      4: {
+        cups: 4,
+        name: '4 чашки',
+        totalVolumeMl: 185,
+        heightCm: 18.0,
+        baseWidthCm: 9.5,
+        boilerMaxWaterMl: 170,
+        defaultWaterMl: 150,
+        defaultCoffeeG: 22.0,
+        minCoffeeG: 17.0,
+        maxCoffeeG: 26.0,
+        minWaterMl: 80
+      },
+      6: {
+        cups: 6,
+        name: '6 чашек',
+        totalVolumeMl: 250,
+        heightCm: 21.5,
+        baseWidthCm: 11.0,
+        boilerMaxWaterMl: 235,
+        defaultWaterMl: 205,
+        defaultCoffeeG: 28.0,
+        minCoffeeG: 22.0,
+        maxCoffeeG: 33.0,
+        minWaterMl: 110
+      },
+      9: {
+        cups: 9,
+        name: '9 чашек',
+        totalVolumeMl: 410,
+        heightCm: 25.0,
+        baseWidthCm: 11.5,
+        boilerMaxWaterMl: 380,
+        defaultWaterMl: 335,
+        defaultCoffeeG: 42.0,
+        minCoffeeG: 34.0,
+        maxCoffeeG: 48.0,
+        minWaterMl: 180
+      }
+    };
+
+    // 2. МАТРИЦА КОФЕЙНЫХ НАПИТКОВ (Без Латте)
+    const DRINKS = {
+      espresso: {
+        id: 'espresso',
+        name: 'Эспрессо (Мока)',
+        shortDesc: 'Чистый концентрат',
+        modifierType: 'none',
+        modifierRatio: 0,
+        foamRatio: 0
+      },
+      flatwhite: {
+        id: 'flatwhite',
+        name: 'Флэт Уайт',
+        shortDesc: 'Молоко 1:2.5 + тонкая пена',
+        modifierType: 'milk',
+        modifierRatio: 2.5,
+        foamRatio: 0.35
+      },
+      cappuccino: {
+        id: 'cappuccino',
+        name: 'Капучино',
+        shortDesc: 'Молоко 1:2 + пышная пена',
+        modifierType: 'milk',
+        modifierRatio: 2.0,
+        foamRatio: 1.0
+      },
+      cortado: {
+        id: 'cortado',
+        name: 'Кортадо',
+        shortDesc: 'Баланс кофе и молока 1:1',
+        modifierType: 'milk',
+        modifierRatio: 1.0,
+        foamRatio: 0.15
+      },
+      americano: {
+        id: 'americano',
+        name: 'Американо',
+        shortDesc: 'Горячая вода 1:2.2',
+        modifierType: 'water',
+        modifierRatio: 2.2,
+        foamRatio: 0
+      }
+    };
+
+    // 3. БАЗА КОФЕМОЛОК
+    const GRINDERS = {
+      timemore_c3: {
+        name: 'Timemore C3 / C3S Pro',
+        baseClicks: 15,
+        minClicks: 14,
+        maxClicks: 16,
+        unit: 'щелчков'
+      },
+      '1zpresso_q2': {
+        name: '1Zpresso Q2 / JX',
+        baseClicks: 42,
+        minClicks: 38,
+        maxClicks: 46,
+        unit: 'кликов'
+      },
+      comandante_c40: {
+        name: 'Comandante C40 MK4',
+        baseClicks: 16,
+        minClicks: 14,
+        maxClicks: 18,
+        unit: 'кликов'
+      },
+      kingrinder_k6: {
+        name: 'KINGrinder K6',
+        baseClicks: 55,
+        minClicks: 50,
+        maxClicks: 60,
+        unit: 'кликов'
+      },
+      baratza_encore: {
+        name: 'Baratza Encore ESP',
+        baseClicks: 14,
+        minClicks: 12,
+        maxClicks: 16,
+        unit: 'делений'
+      }
+    };
+
+    // СОСТОЯНИЕ ПРИЛОЖЕНИЯ (Эталон: 2 чашки, 12 г кофе, 70 мл воды)
+    let state = {
+      mokaSize: 2,
+      drinkId: 'espresso',
+      coffeeG: 12.0,
+      waterMl: 70,
+      ratioLocked: false,
+      lockedRatioValue: 70 / 12.0,
+      grinderId: 'timemore_c3',
+      roastId: 'medium_blend',
+      usePaperFilter: false
+    };
+
+    // ИНИЦИАЛИЗАЦИЯ
+    function init() {
+      renderDrinkSelector();
+      renderMokaSizeButtons();
+      syncSlidersToSize(state.mokaSize);
+      updateUI();
+      renderSavedPresetsBar();
+    }
+
+    function renderDrinkSelector() {
+      const container = document.getElementById('drink-selector-grid');
+      container.innerHTML = Object.values(DRINKS).map(d => {
+        const active = d.id === state.drinkId ? 'active' : '';
+        return `
+          <button onclick="selectDrink('${d.id}')" class="tile-btn ${active} p-3 text-left flex flex-col justify-between">
+            <span class="text-xs font-extrabold text-[#0f2942] leading-tight">${d.name}</span>
+            <span class="text-[10px] font-semibold text-sky-700 mt-1">${d.shortDesc}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderMokaSizeButtons() {
+      const container = document.getElementById('moka-size-grid');
+      container.innerHTML = Object.values(MOKA_SIZES).map(s => {
+        const active = s.cups === state.mokaSize ? 'active' : '';
+        return `
+          <button onclick="selectMokaSize(${s.cups})" class="tile-btn ${active} p-2.5 text-center">
+            <div class="text-xs font-extrabold text-[#0f2942]">${s.name}</div>
+            <div class="text-[11px] font-mono-num font-bold text-sky-700">${s.totalVolumeMl} мл</div>
+            <div class="text-[10px] text-[#4a6b82]">${s.heightCm} × ${s.baseWidthCm} см</div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectDrink(drinkId) {
+      state.drinkId = drinkId;
+      renderDrinkSelector();
+      updateUI();
+    }
+
+    function selectMokaSize(cups) {
+      state.mokaSize = cups;
+      const sizeObj = MOKA_SIZES[cups];
+      state.coffeeG = sizeObj.defaultCoffeeG;
+      state.waterMl = sizeObj.defaultWaterMl;
+      state.lockedRatioValue = state.waterMl / state.coffeeG;
+      renderMokaSizeButtons();
+      syncSlidersToSize(cups);
+      updateUI();
+    }
+
+    function syncSlidersToSize(cups) {
+      const sizeObj = MOKA_SIZES[cups];
+      const cSlider = document.getElementById('coffee-slider');
+      const wSlider = document.getElementById('water-slider');
+
+      cSlider.min = sizeObj.minCoffeeG;
+      cSlider.max = sizeObj.maxCoffeeG;
+      cSlider.value = state.coffeeG;
+
+      wSlider.min = sizeObj.minWaterMl;
+      wSlider.max = Math.round(sizeObj.boilerMaxWaterMl * 1.15);
+      wSlider.value = state.waterMl;
+
+      document.getElementById('coffee-min-label').textContent = `${sizeObj.minCoffeeG} г`;
+      document.getElementById('coffee-max-label').textContent = `${sizeObj.maxCoffeeG} г`;
+      document.getElementById('water-min-label').textContent = `${sizeObj.minWaterMl} мл`;
+      document.getElementById('water-valve-label').textContent = `${sizeObj.boilerMaxWaterMl} мл`;
+    }
+
+    function toggleRatioLock() {
+      state.ratioLocked = !state.ratioLocked;
+      state.lockedRatioValue = state.waterMl / state.coffeeG;
+      const btn = document.getElementById('lock-ratio-btn');
+      if (state.ratioLocked) {
+        btn.textContent = `🔒 Ratio 1:${state.lockedRatioValue.toFixed(1)}`;
+        btn.className = 'text-xs font-bold px-3 py-1 rounded-full bg-sky-600 text-white border border-sky-700 shadow-sm transition';
+      } else {
+        btn.textContent = '🔓 Ratio свободно';
+        btn.className = 'text-xs font-bold px-3 py-1 rounded-full bg-white/85 border border-sky-300 text-sky-800 shadow-sm hover:bg-sky-50 transition';
+      }
+    }
+
+    function handleCoffeeSlider(val) {
+      state.coffeeG = parseFloat(val);
+      if (state.ratioLocked) {
+        state.waterMl = Math.round(state.coffeeG * state.lockedRatioValue);
+      }
+      updateUI();
+    }
+
+    function handleManualCoffeeInput(val) {
+      const num = parseFloat(val);
+      if (isNaN(num) || num <= 0) return;
+      state.coffeeG = num;
+      if (state.ratioLocked) {
+        state.waterMl = Math.round(state.coffeeG * state.lockedRatioValue);
+      }
+      updateUI();
+    }
+
+    function handleWaterSlider(val) {
+      state.waterMl = parseInt(val, 10);
+      if (state.ratioLocked) {
+        state.coffeeG = parseFloat((state.waterMl / state.lockedRatioValue).toFixed(1));
+      }
+      updateUI();
+    }
+
+    function handleManualWaterInput(val) {
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num <= 0) return;
+      state.waterMl = num;
+      if (state.ratioLocked) {
+        state.coffeeG = parseFloat((state.waterMl / state.lockedRatioValue).toFixed(1));
+      }
+      updateUI();
+    }
+
+    function handleGrinderChange(val) {
+      state.grinderId = val;
+      updateUI();
+    }
+
+    function handleRoastChange(val) {
+      state.roastId = val;
+      updateUI();
+    }
+
+    function togglePaperFilter(checked) {
+      state.usePaperFilter = checked;
+      updateUI();
+    }
+
+    function resetToDefaultStandard() {
+      state.mokaSize = 2;
+      state.drinkId = 'espresso';
+      state.coffeeG = 12.0;
+      state.waterMl = 70;
+      state.ratioLocked = false;
+      state.usePaperFilter = false;
+      document.getElementById('paper-filter-checkbox').checked = false;
+      renderDrinkSelector();
+      renderMokaSizeButtons();
+      syncSlidersToSize(2);
+      updateUI();
+    }
+
+    // ГЛАВНОЕ ОБНОВЛЕНИЕ UI, ФИЗИКИ И ЧЕРТЕЖЕЙ
+    function updateUI() {
+      const sizeObj = MOKA_SIZES[state.mokaSize];
+      const drinkObj = DRINKS[state.drinkId];
+
+      // Поля ввода и слайдеры
+      document.getElementById('coffee-input').value = state.coffeeG;
+      document.getElementById('coffee-slider').value = state.coffeeG;
+      document.getElementById('water-input').value = state.waterMl;
+      document.getElementById('water-slider').value = state.waterMl;
+
+      // Бейджи выбранного напитка и габаритов
+      document.getElementById('selected-drink-badge').textContent = drinkObj.name;
+      document.getElementById('protocol-drink-badge').textContent = drinkObj.name;
+      document.getElementById('moka-dimensions-badge').textContent = `${sizeObj.heightCm.toFixed(1)} см × Ø ${sizeObj.baseWidthCm.toFixed(1)} см`;
+
+      // Расчет коэффициента и выхода базы (с учетом удерживания воды в таблетке ~1.9 мл/г)
+      const ratio = state.waterMl / state.coffeeG;
+      const absorbedWater = state.coffeeG * 1.9;
+      const yieldMl = Math.max(10, Math.round(state.waterMl - absorbedWater));
+
+      // Модификаторы (молоко, пена, вода)
+      const modifierMl = Math.round(yieldMl * drinkObj.modifierRatio);
+      const foamMl = Math.round(yieldMl * drinkObj.foamRatio);
+      const totalDrinkMl = yieldMl + modifierMl + foamMl;
+
+      document.getElementById('summary-ratio').textContent = `1 : ${ratio.toFixed(1)}`;
+      document.getElementById('summary-yield').textContent = `${yieldMl} мл`;
+      document.getElementById('summary-total-drink').textContent = `${totalDrinkMl} мл`;
+      document.getElementById('active-preset-pill').textContent = `${sizeObj.name}: ${state.coffeeG} г / ${state.waterMl} мл`;
+
+      // 1. КОНТРОЛЬ ЗАПОЛНЕНИЯ КОРЗИНЫ ДО КРАЕВ (Правило отсутствия пустоты)
+      const fillPercent = Math.round((state.coffeeG / sizeObj.defaultCoffeeG) * 100);
+      const basketBadge = document.getElementById('basket-fill-badge');
+      const basketHint = document.getElementById('basket-headspace-hint');
+
+      if (fillPercent < 90) {
+        basketBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-amber-100/95 text-amber-900 border border-amber-400';
+        basketBadge.textContent = `Корзина заполнена на ${fillPercent}% (Есть пустота!)`;
+        basketHint.innerHTML = `<span class="text-amber-800 font-semibold">Внимание:</span> между кофе и верхним фильтром образовалась пустота. Системе потребуется лишняя энергия для её преодоления — вода начнет неравномерно булькать. Досыпьте кофе до ~${sizeObj.defaultCoffeeG} г.`;
+      } else if (fillPercent <= 108) {
+        basketBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300';
+        basketBadge.textContent = `Корзина заполнена (${fillPercent}% — Без пустот)`;
+        basketHint.textContent = 'Идеально: корзина заполнена до краев без утрамбовки. Пустоты под верхним фильтром нет — экстракция пройдет равномерно.';
+      } else {
+        basketBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-red-100/90 text-red-700 border border-red-400';
+        basketBadge.textContent = `Переполнение (${fillPercent}% — Риск запрессовки!)`;
+        basketHint.innerHTML = `<span class="text-red-700 font-semibold">Опасно:</span> избыток кофе приведет к непроизвольной утрамбовке при закручивании — скачок давления и температуры даст жженый и горький вкус.`;
+      }
+
+      // 2. КОНТРОЛЬ КЛАПАНА И ТЕРМОДИНАМИКИ ВОДЫ
+      const safetyBadge = document.getElementById('safety-badge');
+      const valveIcon = document.getElementById('svg-valve-icon');
+      const tempBadge = document.getElementById('water-temp-profile-badge');
+      const waterFillRatio = state.waterMl / sizeObj.boilerMaxWaterMl;
+
+      if (state.waterMl > sizeObj.boilerMaxWaterMl) {
+        safetyBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-red-100/90 border border-red-400 text-red-700';
+        safetyBadge.textContent = `Выше клапана (+${state.waterMl - sizeObj.boilerMaxWaterMl} мл)!`;
+        valveIcon.setAttribute('fill', '#ef4444');
+      } else {
+        safetyBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 border border-emerald-400 text-emerald-800';
+        safetyBadge.textContent = `Ниже клапана (Норма)`;
+        valveIcon.setAttribute('fill', '#eab308');
+      }
+
+      if (waterFillRatio < 0.78) {
+        tempBadge.textContent = 'Мягкий / Прохладный (~89–92°C — минимум горечи)';
+        tempBadge.className = 'font-mono-num font-bold text-emerald-800 bg-emerald-100/85 px-2.5 py-0.5 rounded-full border border-emerald-300';
+      } else if (waterFillRatio <= 0.94) {
+        tempBadge.textContent = 'Сбалансированный (~92–95°C)';
+        tempBadge.className = 'font-mono-num font-bold text-sky-800 bg-sky-100/85 px-2.5 py-0.5 rounded-full border border-sky-200';
+      } else {
+        tempBadge.textContent = 'Горячий профиль (~96–99°C — выше риск горечи)';
+        tempBadge.className = 'font-mono-num font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300';
+      }
+
+      // 3. РАСЧЕТ ЩЕЛЧКОВ КОФЕМОЛКИ (с учетом обжарки, размера и бумажного фильтра AeroPress)
+      const grinder = GRINDERS[state.grinderId];
+      let recommendedClicks = grinder.baseClicks;
+      if (state.roastId === 'light_arabica') recommendedClicks -= 1;
+      if (state.roastId === 'dark_italian') recommendedClicks += 1;
+      if (state.mokaSize >= 6) recommendedClicks += 1;
+      if (state.usePaperFilter) recommendedClicks += 1; // Бумажный фильтр дает доп. сопротивление -> можно крупнее
+
+      document.getElementById('grinder-clicks-Main').textContent =
+        `${recommendedClicks} ${grinder.unit} (диапазон ${recommendedClicks - 1}–${recommendedClicks + 1})`;
+      document.getElementById('grind-micron-badge').textContent =
+        state.usePaperFilter ? '~420–490 мкм (с фильтром)' : '~380–450 мкм';
+
+      // 4. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА МОКИ
+      document.getElementById('svg-moka-title-badge').textContent = `${sizeObj.name} (${sizeObj.totalVolumeMl} мл)`;
+      document.getElementById('svg-dim-height').textContent = `${sizeObj.heightCm.toFixed(1)} см`;
+      document.getElementById('svg-dim-width').textContent = `Ø ${sizeObj.baseWidthCm.toFixed(1)} см`;
+
+      // Вода в бойлере (координаты Y от 292 снизу до 220 у клапана)
+      const maxBoilerHeightPx = 72;
+      const waterHeightPx = Math.min(82, Math.max(14, Math.round((state.waterMl / sizeObj.boilerMaxWaterMl) * maxBoilerHeightPx)));
+      const waterY = 292 - waterHeightPx;
+      const boilerWaterRect = document.getElementById('svg-boiler-water');
+      boilerWaterRect.setAttribute('y', waterY);
+      boilerWaterRect.setAttribute('height', waterHeightPx);
+      document.getElementById('svg-water-label').textContent = `${state.waterMl} мл (~20°C)`;
+
+      // Корзина с молотым кофе и визуализация пустоты (Headspace)
+      const maxBasketHeightPx = 42;
+      const coffeeFillRatio = Math.min(1, state.coffeeG / sizeObj.defaultCoffeeG);
+      const groundsHeightPx = Math.max(16, Math.round(coffeeFillRatio * maxBasketHeightPx));
+      const groundsY = 210 - groundsHeightPx;
+      const voidHeightPx = Math.max(0, 42 - groundsHeightPx);
+
+      document.getElementById('svg-coffee-grounds-solid').setAttribute('y', groundsY);
+      document.getElementById('svg-coffee-grounds-solid').setAttribute('height', groundsHeightPx);
+      document.getElementById('svg-coffee-grounds').setAttribute('y', groundsY);
+      document.getElementById('svg-coffee-grounds').setAttribute('height', groundsHeightPx);
+      document.getElementById('svg-headspace-void').setAttribute('height', voidHeightPx);
+      document.getElementById('svg-coffee-label').textContent = `${state.coffeeG.toFixed(1)} г кофе`;
+
+      // Видимость бумажного фильтра AeroPress на чертеже
+      const paperFilterSvg = document.getElementById('svg-paper-filter');
+      if (state.usePaperFilter) {
+        paperFilterSvg.classList.remove('hidden');
+      } else {
+        paperFilterSvg.classList.add('hidden');
+      }
+
+      // Выход кофе в верхней чаше
+      const maxUpperHeightPx = 78;
+      const upperFillRatio = Math.min(1, yieldMl / sizeObj.totalVolumeMl);
+      const upperCoffeeHeightPx = Math.max(16, Math.round(upperFillRatio * maxUpperHeightPx));
+      const upperCoffeeY = 158 - upperCoffeeHeightPx;
+
+      document.getElementById('svg-upper-coffee').setAttribute('y', upperCoffeeY);
+      document.getElementById('svg-upper-coffee').setAttribute('height', upperCoffeeHeightPx);
+      document.getElementById('svg-upper-crema').setAttribute('y', upperCoffeeY - 4);
+      document.getElementById('svg-yield-label').textContent = `Выход: ${yieldMl} мл`;
+
+      // 5. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА ИТОГОВОЙ ЧАШКИ
+      document.getElementById('svg-cup-title-badge').textContent = drinkObj.name;
+      const cupBottomY = 266;
+      const cupMaxDrawableHeight = 166;
+      const scaleCup = Math.min(1.1, cupMaxDrawableHeight / Math.max(90, totalDrinkMl));
+
+      const coffeeLayerH = Math.max(28, Math.round(yieldMl * scaleCup));
+      const modifierLayerH = Math.round(modifierMl * scaleCup);
+      const foamLayerH = Math.round(foamMl * scaleCup);
+
+      const coffeeLayerY = cupBottomY - coffeeLayerH;
+      const cremaLayerY = coffeeLayerY - 4;
+      const modifierLayerY = cremaLayerY - modifierLayerH;
+      const foamLayerY = modifierLayerY - foamLayerH;
+
+      document.getElementById('cup-layer-coffee').setAttribute('y', coffeeLayerY);
+      document.getElementById('cup-layer-coffee').setAttribute('height', coffeeLayerH);
+      document.getElementById('cup-layer-crema').setAttribute('y', cremaLayerY);
+
+      const modBg = document.getElementById('cup-layer-modifier-bg');
+      const modPat = document.getElementById('cup-layer-modifier-pattern');
+      modBg.setAttribute('y', modifierLayerY);
+      modBg.setAttribute('height', modifierLayerH);
+      modPat.setAttribute('y', modifierLayerY);
+      modPat.setAttribute('height', modifierLayerH);
+
+      if (drinkObj.modifierType === 'water') {
+        modBg.setAttribute('fill', 'rgba(56, 189, 248, 0.55)');
+        modPat.setAttribute('fill-opacity', '0');
+      } else {
+        modBg.setAttribute('fill', '#fffdf7');
+        modPat.setAttribute('fill-opacity', '0.7');
+      }
+
+      const foamRect = document.getElementById('cup-layer-foam');
+      foamRect.setAttribute('y', foamLayerY);
+      foamRect.setAttribute('height', foamLayerH);
+
+      // Подписи слоев чашки
+      document.getElementById('cup-coffee-label').textContent = `Кофе-база: ${yieldMl} мл`;
+      document.getElementById('cup-total-badge').textContent = `Итого в чашке: ${totalDrinkMl} мл`;
+
+      const modGroup = document.getElementById('cup-modifier-badge-group');
+      const foamGroup = document.getElementById('cup-foam-badge-group');
+
+      if (modifierMl > 0) {
+        modGroup.classList.remove('hidden');
+        const modTitle = drinkObj.modifierType === 'water' ? 'Горячая вода' : 'Молоко';
+        document.getElementById('cup-modifier-label').textContent = `${modTitle}: ${modifierMl} мл`;
+      } else {
+        modGroup.classList.add('hidden');
+      }
+
+      if (foamMl > 0) {
+        foamGroup.classList.remove('hidden');
+        document.getElementById('cup-foam-label').textContent = `Микропена: ${foamMl} мл`;
+      } else {
+        foamGroup.classList.add('hidden');
+      }
+
+      // 6. РЕНДЕР ПОШАГОВОГО ПРОТОКОЛА
+      renderProtocolSteps(sizeObj, drinkObj, yieldMl, modifierMl, foamMl, recommendedClicks, grinder.unit);
+    }
+
+    function renderProtocolSteps(sizeObj, drinkObj, yieldMl, modifierMl, foamMl, clicks, unit) {
+      const container = document.getElementById('protocol-steps-container');
+      const filterStepText = state.usePaperFilter
+        ? 'Смочите круглый <b>бумажный фильтр AeroPress</b> водой и приклейте его к верхнему металлическому ситу кофейника — это сделает чашку чище и выровняет поток.'
+        : 'Разровняйте кофе легким постукиванием по бортикам воронки. <b>Никогда не давите темпером или ложкой</b>, чтобы не задирать давление и температуру.';
+
+      const steps = [
+        {
+          title: 'Вода комнатной температуры (~20°C)',
+          desc: `Налейте в нижнюю чашу <b>${state.waterMl} мл</b> чистой воды комнатной температуры (не кипяток!). По мере нагрева расширяющийся воздух и пар мягко увлажнят кофейную таблетку без перегрева выше 100°C.`
+        },
+        {
+          title: 'Помол и заполнение корзины до краев',
+          desc: `Смолите <b>${state.coffeeG.toFixed(1)} г</b> кофе на настройке <b>${clicks} ${unit}</b>. Засыпьте в корзину до краев без воздушной пустоты сверху. ${filterStepText}`
+        },
+        {
+          title: 'Плавный нагрев и отсечка до «Стромболианского эффекта»',
+          desc: `Поставьте Моку на средний/умеренный нагрев. Как только кофе активно пойдет в верхнюю чашу (~<b>${yieldMl} мл</b> базы), <b>сильно убавьте или выключите конфорку</b>: остаточного давления внутри хватит, чтобы протолкнуть воду без вулканического фырканья и горечи.`
+        }
+      ];
+
+      if (drinkObj.modifierType === 'milk') {
+        steps.push({
+          title: `Приготовление молочной части (${drinkObj.name})`,
+          desc: `Подогрейте и взбейте <b>${modifierMl} мл</b> молока (до 60–65°C) с образованием <b>~${foamMl} мл</b> шелковистой микропены, затем влейте в <b>${yieldMl} мл</b> готового кофейного концентрата.`
+        });
+      } else if (drinkObj.modifierType === 'water') {
+        steps.push({
+          title: 'Сборка Американо',
+          desc: `Налейте в чашку <b>${modifierMl} мл</b> горячей воды (88–92°C) и аккуратно влейте сверху <b>${yieldMl} мл</b> сваренной базы из Моки для сохранения крема.`
+        });
+      }
+
+      container.innerHTML = steps.map((s, idx) => `
+        <div class="bg-white/60 border border-white/85 rounded-xl p-3.5 shadow-sm flex gap-3 items-start">
+          <span class="w-6 h-6 rounded-full bg-sky-100 text-sky-800 border border-sky-300 font-mono-num text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+            ${idx + 1}
+          </span>
+          <div class="text-xs">
+            <div class="font-bold text-[#0f2942]">${s.title}</div>
+            <div class="text-[#4a6b82] mt-0.5 leading-relaxed">${s.desc}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // СОХРАНЕНИЕ ПРЕСЕТОВ В LOCALSTORAGE
+    function getSavedPresets() {
+      try {
+        return JSON.parse(localStorage.getItem('mokalab_aero_presets') || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function openSavePresetModal() {
+      document.getElementById('save-modal').classList.remove('hidden');
+      document.getElementById('save-modal').classList.add('flex');
+    }
+
+    function closeSavePresetModal() {
+      document.getElementById('save-modal').classList.add('hidden');
+      document.getElementById('save-modal').classList.remove('flex');
+    }
+
+    function confirmSavePreset() {
+      const nameInput = document.getElementById('preset-name-input');
+      const name = nameInput.value.trim() || `Рецепт ${state.coffeeG}г / ${state.waterMl}мл`;
+      const presets = getSavedPresets();
+      presets.push({ ...state, name, id: Date.now() });
+      localStorage.setItem('mokalab_aero_presets', JSON.stringify(presets));
+      nameInput.value = '';
+      closeSavePresetModal();
+      renderSavedPresetsBar();
+    }
+
+    function loadPreset(id) {
+      const presets = getSavedPresets();
+      const found = presets.find(p => p.id === id);
+      if (!found) return;
+      state = { ...found };
+      document.getElementById('paper-filter-checkbox').checked = !!state.usePaperFilter;
+      renderDrinkSelector();
+      renderMokaSizeButtons();
+      syncSlidersToSize(state.mokaSize);
+      updateUI();
+    }
+
+    function deletePreset(id) {
+      const presets = getSavedPresets().filter(p => p.id !== id);
+      localStorage.setItem('mokalab_aero_presets', JSON.stringify(presets));
+      renderSavedPresetsBar();
+    }
+
+    function renderSavedPresetsBar() {
+      const bar = document.getElementById('saved-presets-bar');
+      const presets = getSavedPresets();
+      if (!presets.length) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+      bar.innerHTML = `
+        <div class="brutal-card px-4 py-2.5 flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-bold text-[#4a6b82]">Мои рецепты:</span>
+          ${presets.map(p => `
+            <div class="inline-flex items-center bg-white/75 border border-sky-200 rounded-full px-3 py-1 text-xs font-semibold text-sky-900 shadow-sm gap-2">
+              <button onclick="loadPreset(${p.id})" class="hover:text-sky-600">${p.name}</button>
+              <button onclick="deletePreset(${p.id})" class="text-slate-400 hover:text-red-600 font-bold">×</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // ЭКСПОРТ / ИМПОРТ JSON
+    function openJsonModal() {
+      document.getElementById('json-textarea').value = JSON.stringify(state, null, 2);
+      document.getElementById('json-modal').classList.remove('hidden');
+      document.getElementById('json-modal').classList.add('flex');
+    }
+
+    function closeJsonModal() {
+      document.getElementById('json-modal').classList.add('hidden');
+      document.getElementById('json-modal').classList.remove('flex');
+    }
+
+    function copyJsonToClipboard() {
+      const textarea = document.getElementById('json-textarea');
+      textarea.select();
+      document.execCommand('copy');
+    }
+
+    function importJsonConfig() {
+      try {
+        const parsed = JSON.parse(document.getElementById('json-textarea').value);
+        if (parsed && parsed.mokaSize && MOKA_SIZES[parsed.mokaSize]) {
+          state = { ...state, ...parsed };
+          document.getElementById('paper-filter-checkbox').checked = !!state.usePaperFilter;
+          renderDrinkSelector();
+          renderMokaSizeButtons();
+          syncSlidersToSize(state.mokaSize);
+          updateUI();
+          closeJsonModal();
+        }
+      } catch (e) {
+        alert('Некорректный формат JSON');
+      }
+    }
+
+    // PWA УСТАНОВКА И SERVICE WORKER
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btn = document.getElementById('pwa-install-btn');
+      btn.classList.remove('hidden');
+      btn.onclick = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        btn.classList.add('hidden');
+      };
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

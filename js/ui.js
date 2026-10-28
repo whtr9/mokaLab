@@ -1,14 +1,50 @@
 import { MOKA_SIZES, DRINKS, GRINDERS } from './data.js';
 import { state } from './state.js';
+import { t, currentLang, localizeItem } from './i18n.js';
+
+export function applyStaticTranslations() {
+  document.title = t('pageTitle');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    el.innerHTML = t(key);
+  });
+
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.setAttribute('placeholder', t(key));
+  });
+
+  const langBtn = document.getElementById('lang-toggle-btn');
+  if (langBtn) {
+    langBtn.textContent = currentLang === 'ru' ? '🌐 EN' : '🌐 RU';
+  }
+
+  const lockBtn = document.getElementById('lock-ratio-btn');
+  if (lockBtn) {
+    if (state.ratioLocked) {
+      lockBtn.textContent = `${t('ratioLocked')} 1:${state.lockedRatioValue.toFixed(1)}`;
+    } else {
+      lockBtn.textContent = t('ratioFree');
+    }
+  }
+}
 
 export function renderDrinkSelector() {
   const container = document.getElementById('drink-selector-grid');
   container.innerHTML = Object.values(DRINKS).map(d => {
     const active = d.id === state.drinkId ? 'active' : '';
+    const name = localizeItem(d, 'name');
+    const shortDesc = localizeItem(d, 'shortDesc');
     return `
       <button onclick="selectDrink('${d.id}')" class="tile-btn ${active} p-3 text-left flex flex-col justify-between">
-        <span class="text-xs font-extrabold text-[#0f2942] leading-tight">${d.name}</span>
-        <span class="text-[10px] font-semibold text-sky-700 mt-1">${d.shortDesc}</span>
+        <span class="text-xs font-extrabold text-[#0f2942] leading-tight">${name}</span>
+        <span class="text-[10px] font-semibold text-sky-700 mt-1">${shortDesc}</span>
       </button>
     `;
   }).join('');
@@ -16,32 +52,34 @@ export function renderDrinkSelector() {
 
 export function renderMokaSizeButtons() {
   const container = document.getElementById('moka-size-grid');
+  const unitG = t('unitG');
+  const unitMl = t('unitMl');
 
   const sizeCardsHtml = Object.values(MOKA_SIZES).map(s => {
     const active = String(s.cups) === String(state.mokaSize) ? 'active' : '';
+    const displayName = localizeItem(s, 'name');
     const deleteBtnHtml = s.isCustom
       ? `<span onclick="event.stopPropagation(); removeCustomMoka('${s.id}')"
-               title="Удалить профиль"
+               title="${t('deleteProfileTitle')}"
                class="absolute top-1 right-1.5 text-[11px] font-bold text-slate-400 hover:text-red-600 px-1">✕</span>`
       : '';
 
     return `
       <button onclick="selectMokaSize('${s.cups}')" class="tile-btn ${active} p-2.5 text-center relative flex flex-col justify-center">
         ${deleteBtnHtml}
-        <div class="text-xs font-extrabold text-[#0f2942] truncate px-2">${s.name}</div>
-        <div class="text-[11px] font-mono-num font-bold text-amber-800 mt-0.5">Воронка: ${s.defaultCoffeeG} г</div>
-        <div class="text-[10px] font-mono-num font-semibold text-sky-700">Бойлер: ${s.boilerMaxWaterMl} мл</div>
+        <div class="text-xs font-extrabold text-[#0f2942] truncate px-2">${displayName}</div>
+        <div class="text-[11px] font-mono-num font-bold text-amber-800 mt-0.5">${t('funnelWord')}: ${s.defaultCoffeeG} ${unitG}</div>
+        <div class="text-[10px] font-mono-num font-semibold text-sky-700">${t('boilerWord')}: ${s.boilerMaxWaterMl} ${unitMl}</div>
       </button>
     `;
   }).join('');
 
-  // Кнопка добавления своей кофеварки в том же стиле .tile-btn
   const addCustomBtnHtml = `
     <button onclick="openCustomMokaModal()"
             class="tile-btn p-2.5 text-center flex flex-col items-center justify-center border-dashed border-2 border-sky-400/80 hover:border-sky-500">
       <div class="text-base font-extrabold text-sky-700 leading-none">+</div>
-      <div class="text-xs font-extrabold text-[#0f2942] mt-1">Своя Мока</div>
-      <div class="text-[10px] font-semibold text-sky-700">Калибровка г / мл</div>
+      <div class="text-xs font-extrabold text-[#0f2942] mt-1">${t('customMokaTileTitle')}</div>
+      <div class="text-[10px] font-semibold text-sky-700">${t('customMokaTileSub')}</div>
     </button>
   `;
 
@@ -52,6 +90,8 @@ export function syncSlidersToSize(cupsKey) {
   const sizeObj = MOKA_SIZES[cupsKey] || MOKA_SIZES['2'];
   const cSlider = document.getElementById('coffee-slider');
   const wSlider = document.getElementById('water-slider');
+  const unitG = t('unitG');
+  const unitMl = t('unitMl');
 
   cSlider.min = sizeObj.minCoffeeG;
   cSlider.max = sizeObj.maxCoffeeG;
@@ -61,29 +101,30 @@ export function syncSlidersToSize(cupsKey) {
   wSlider.max = Math.round(sizeObj.boilerMaxWaterMl * 1.15);
   wSlider.value = state.waterMl;
 
-  document.getElementById('coffee-min-label').textContent = `${sizeObj.minCoffeeG} г`;
-  document.getElementById('coffee-max-label').textContent = `${sizeObj.maxCoffeeG} г`;
-  document.getElementById('water-min-label').textContent = `${sizeObj.minWaterMl} мл`;
-  document.getElementById('water-valve-label').textContent = `${sizeObj.boilerMaxWaterMl} мл`;
+  document.getElementById('coffee-min-label').textContent = `${sizeObj.minCoffeeG} ${unitG}`;
+  document.getElementById('coffee-max-label').textContent = `${sizeObj.maxCoffeeG} ${unitG}`;
+  document.getElementById('water-min-label').textContent = `${sizeObj.minWaterMl} ${unitMl}`;
+  document.getElementById('water-valve-label').textContent = `${sizeObj.boilerMaxWaterMl} ${unitMl}`;
 }
 
 export function updateUI() {
   const sizeObj = MOKA_SIZES[state.mokaSize] || MOKA_SIZES['2'];
   const drinkObj = DRINKS[state.drinkId];
+  const sizeName = localizeItem(sizeObj, 'name');
+  const drinkName = localizeItem(drinkObj, 'name');
+  const unitG = t('unitG');
+  const unitMl = t('unitMl');
 
-  // Поля ввода и слайдеры
   document.getElementById('coffee-input').value = state.coffeeG;
   document.getElementById('coffee-slider').value = state.coffeeG;
   document.getElementById('water-input').value = state.waterMl;
   document.getElementById('water-slider').value = state.waterMl;
 
-  // Бейджи выбранного напитка и параметров профиля (без сантиметров)
-  document.getElementById('selected-drink-badge').textContent = drinkObj.name;
-  document.getElementById('protocol-drink-badge').textContent = drinkObj.name;
+  document.getElementById('selected-drink-badge').textContent = drinkName;
+  document.getElementById('protocol-drink-badge').textContent = drinkName;
   document.getElementById('moka-capacity-badge').textContent =
-    `Воронка: ${sizeObj.defaultCoffeeG} г | Клапан: ${sizeObj.boilerMaxWaterMl} мл`;
+    `${t('funnelWord')}: ${sizeObj.defaultCoffeeG} ${unitG} | ${t('valveWord')}: ${sizeObj.boilerMaxWaterMl} ${unitMl}`;
 
-  // Расчет коэффициента и выхода базы
   const ratio = state.waterMl / state.coffeeG;
   const absorbedWater = state.coffeeG * 1.9;
   const yieldMl = Math.max(10, Math.round(state.waterMl - absorbedWater));
@@ -93,30 +134,30 @@ export function updateUI() {
   const totalDrinkMl = yieldMl + modifierMl + foamMl;
 
   document.getElementById('summary-ratio').textContent = `1 : ${ratio.toFixed(1)}`;
-  document.getElementById('summary-yield').textContent = `${yieldMl} мл`;
-  document.getElementById('summary-total-drink').textContent = `${totalDrinkMl} мл`;
-  document.getElementById('active-preset-pill').textContent = `${sizeObj.name}: ${state.coffeeG} г / ${state.waterMl} мл`;
+  document.getElementById('summary-yield').textContent = `${yieldMl} ${unitMl}`;
+  document.getElementById('summary-total-drink').textContent = `${totalDrinkMl} ${unitMl}`;
+  document.getElementById('active-preset-pill').textContent = `${sizeName}: ${state.coffeeG} ${unitG} / ${state.waterMl} ${unitMl}`;
 
-  // 1. КОНТРОЛЬ ЗАПОЛНЕНИЯ КОРЗИНЫ ДО КРАЕВ
+  // 1. КОНТРОЛЬ ЗАПОЛНЕНИЯ КОРЗИНЫ
   const fillPercent = Math.round((state.coffeeG / sizeObj.defaultCoffeeG) * 100);
   const basketBadge = document.getElementById('basket-fill-badge');
   const basketHint = document.getElementById('basket-headspace-hint');
 
   if (fillPercent < 90) {
     basketBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-amber-100/95 text-amber-900 border border-amber-400';
-    basketBadge.textContent = `Корзина заполнена на ${fillPercent}% (Есть пустота!)`;
-    basketHint.innerHTML = `<span class="text-amber-800 font-semibold">Внимание:</span> между кофе и верхним фильтром образовалась пустота. Системе потребуется лишняя энергия для её преодоления — вода начнет неравномерно булькать. Досыпьте кофе до ~${sizeObj.defaultCoffeeG} г.`;
+    basketBadge.textContent = t('basketUnderfillBadge', fillPercent);
+    basketHint.innerHTML = t('basketUnderfillHint', sizeObj.defaultCoffeeG);
   } else if (fillPercent <= 108) {
     basketBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300';
-    basketBadge.textContent = `Корзина заполнена (${fillPercent}% — Без пустот)`;
-    basketHint.textContent = 'Идеально: корзина заполнена до краев без утрамбовки. Пустоты под верхним фильтром нет — экстракция пройдет равномерно.';
+    basketBadge.textContent = t('basketOptimalBadge', fillPercent);
+    basketHint.textContent = t('basketOptimalHint');
   } else {
     basketBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-red-100/90 text-red-700 border border-red-400';
-    basketBadge.textContent = `Переполнение (${fillPercent}% — Риск запрессовки!)`;
-    basketHint.innerHTML = `<span class="text-red-700 font-semibold">Опасно:</span> избыток кофе приведет к непроизвольной утрамбовке при закручивании — скачок давления и температуры даст жженый и горький вкус.`;
+    basketBadge.textContent = t('basketOverfillBadge', fillPercent);
+    basketHint.innerHTML = t('basketOverfillHint');
   }
 
-  // 2. КОНТРОЛЬ КЛАПАНА И ТЕРМОДИНАМИКИ ВОДЫ
+  // 2. КОНТРОЛЬ КЛАПАНА И ТЕРМОДИНАМИКИ
   const safetyBadge = document.getElementById('safety-badge');
   const valveIcon = document.getElementById('svg-valve-icon');
   const tempBadge = document.getElementById('water-temp-profile-badge');
@@ -124,27 +165,28 @@ export function updateUI() {
 
   if (state.waterMl > sizeObj.boilerMaxWaterMl) {
     safetyBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-red-100/90 border border-red-400 text-red-700';
-    safetyBadge.textContent = `Выше клапана (+${state.waterMl - sizeObj.boilerMaxWaterMl} мл)!`;
+    safetyBadge.textContent = t('safetyAboveValve', state.waterMl - sizeObj.boilerMaxWaterMl);
     valveIcon.setAttribute('fill', '#ef4444');
   } else {
     safetyBadge.className = 'px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 border border-emerald-400 text-emerald-800';
-    safetyBadge.textContent = `Ниже клапана (Норма)`;
+    safetyBadge.textContent = t('safetyBelowValve');
     valveIcon.setAttribute('fill', '#eab308');
   }
 
   if (waterFillRatio < 0.78) {
-    tempBadge.textContent = 'Мягкий / Прохладный (~89–92°C — минимум горечи)';
+    tempBadge.textContent = t('tempCool');
     tempBadge.className = 'font-mono-num font-bold text-emerald-800 bg-emerald-100/85 px-2.5 py-0.5 rounded-full border border-emerald-300';
   } else if (waterFillRatio <= 0.94) {
-    tempBadge.textContent = 'Сбалансированный (~92–95°C)';
+    tempBadge.textContent = t('tempBalanced');
     tempBadge.className = 'font-mono-num font-bold text-sky-800 bg-sky-100/85 px-2.5 py-0.5 rounded-full border border-sky-200';
   } else {
-    tempBadge.textContent = 'Горячий профиль (~96–99°C — выше риск горечи)';
+    tempBadge.textContent = t('tempHot');
     tempBadge.className = 'font-mono-num font-bold text-amber-900 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-300';
   }
 
-  // 3. РАСЧЕТ ЩЕЛЧКОВ КОФЕМОЛКИ (Адаптация под крупную воронку от 24 г кофе)
+  // 3. РАСЧЕТ ЩЕЛЧКОВ КОФЕМОЛКИ
   const grinder = GRINDERS[state.grinderId];
+  const grinderUnit = localizeItem(grinder, 'unit');
   let recommendedClicks = grinder.baseClicks;
   if (state.roastId === 'light_arabica') recommendedClicks -= 1;
   if (state.roastId === 'dark_italian') recommendedClicks += 1;
@@ -152,17 +194,17 @@ export function updateUI() {
   if (state.usePaperFilter) recommendedClicks += 1;
 
   document.getElementById('grinder-clicks-Main').textContent =
-    `${recommendedClicks} ${grinder.unit} (диапазон ${recommendedClicks - 1}–${recommendedClicks + 1})`;
+    t('grinderClicksText', recommendedClicks, grinderUnit, recommendedClicks - 1, recommendedClicks + 1);
   document.getElementById('grind-micron-badge').textContent =
-    state.usePaperFilter ? '~420–490 мкм (с фильтром)' : '~380–450 мкм';
+    state.usePaperFilter ? t('micronWithFilter') : t('micronNoFilter');
 
   // 4. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА МОКИ
   document.getElementById('svg-moka-title-badge').textContent =
-    `${sizeObj.name} (${sizeObj.defaultCoffeeG} г / ${sizeObj.boilerMaxWaterMl} мл)`;
+    `${sizeName} (${sizeObj.defaultCoffeeG} ${unitG} / ${sizeObj.boilerMaxWaterMl} ${unitMl})`;
 
   const boilerBottomY = 328;
   const valveLineY = 229;
-  const maxDrawableWaterHeight = boilerBottomY - valveLineY; // 99px до клапана
+  const maxDrawableWaterHeight = boilerBottomY - valveLineY;
   const waterHeightPx = Math.min(114, Math.max(12, (state.waterMl / sizeObj.boilerMaxWaterMl) * maxDrawableWaterHeight));
   const waterTopY = boilerBottomY - waterHeightPx;
 
@@ -172,9 +214,8 @@ export function updateUI() {
   boilerWaterRect.setAttribute('height', waterHeightPx);
   waterSurfaceLine.setAttribute('y1', waterTopY);
   waterSurfaceLine.setAttribute('y2', waterTopY);
-  document.getElementById('svg-water-label').textContent = `${state.waterMl} МЛ (~20°C)`;
+  document.getElementById('svg-water-label').textContent = t('svgWaterLabel', state.waterMl);
 
-  // Корзина с молотым кофе + зона пустоты сверху
   const basketBottomY = 238;
   const maxBasketHeight = 54;
   const coffeeFillRatio = Math.min(1, state.coffeeG / sizeObj.defaultCoffeeG);
@@ -187,7 +228,7 @@ export function updateUI() {
   document.getElementById('svg-coffee-grounds').setAttribute('y', coffeeTopY);
   document.getElementById('svg-coffee-grounds').setAttribute('height', coffeeHeightPx);
   document.getElementById('svg-headspace-void').setAttribute('height', voidHeightPx);
-  document.getElementById('svg-coffee-label').textContent = `${state.coffeeG.toFixed(1)} Г КОФЕ`;
+  document.getElementById('svg-coffee-label').textContent = t('svgCoffeeLabel', state.coffeeG.toFixed(1));
 
   const paperFilterSvg = document.getElementById('svg-paper-filter');
   if (state.usePaperFilter) {
@@ -196,7 +237,6 @@ export function updateUI() {
     paperFilterSvg.classList.add('hidden');
   }
 
-  // Выход кофе в верхней чаше
   const upperBottomY = 182;
   const maxUpperHeight = 86;
   const yieldRatio = Math.min(1.0, yieldMl / (sizeObj.boilerMaxWaterMl * 0.85));
@@ -206,11 +246,11 @@ export function updateUI() {
   document.getElementById('svg-upper-coffee').setAttribute('y', upperTopY);
   document.getElementById('svg-upper-coffee').setAttribute('height', upperHeightPx);
   document.getElementById('svg-upper-crema').setAttribute('y', upperTopY - 4);
-  document.getElementById('svg-yield-label').textContent = `БАЗА: ~${yieldMl} МЛ`;
+  document.getElementById('svg-yield-label').textContent = t('svgYieldBase', yieldMl);
 
   // 5. ОБНОВЛЕНИЕ SVG-РАЗРЕЗА ИТОГОВОЙ ЧАШКИ
-  document.getElementById('svg-cup-title-badge').textContent = drinkObj.name;
-  document.getElementById('cup-total-top').textContent = `В ЧАШКЕ: ~${totalDrinkMl} МЛ`;
+  document.getElementById('svg-cup-title-badge').textContent = drinkName;
+  document.getElementById('cup-total-top').textContent = t('svgCupTotalTop', totalDrinkMl);
 
   const cupBottomY = 308;
   const cupMaxHeightPx = 215;
@@ -248,8 +288,7 @@ export function updateUI() {
   foamLayer.setAttribute('y', foamY);
   foamLayer.setAttribute('height', foamH);
 
-  // Плавающие подписи слоев чашки
-  document.getElementById('cup-label-coffee').textContent = `КОФЕ-БАЗА: ${yieldMl} МЛ`;
+  document.getElementById('cup-label-coffee').textContent = t('svgCupCoffeeBase', yieldMl);
 
   const modLabelGroup = document.getElementById('cup-label-mod-group');
   if (modifierMl > 0) {
@@ -258,8 +297,9 @@ export function updateUI() {
     modLabelGroup.querySelector('rect').setAttribute('y', modCenterY - 10);
     const textEl = document.getElementById('cup-label-mod');
     textEl.setAttribute('y', modCenterY + 3);
-    const modTitle = drinkObj.modifierType === 'water' ? 'ГОРЯЧАЯ ВОДА' : 'МОЛОКО';
-    textEl.textContent = `${modTitle}: ${modifierMl} МЛ`;
+    textEl.textContent = drinkObj.modifierType === 'water'
+      ? t('svgCupHotWater', modifierMl)
+      : t('svgCupMilk', modifierMl);
   } else {
     modLabelGroup.setAttribute('opacity', '0');
   }
@@ -271,45 +311,44 @@ export function updateUI() {
     foamLabelGroup.querySelector('rect').setAttribute('y', foamCenterY - 9);
     const textEl = document.getElementById('cup-label-foam');
     textEl.setAttribute('y', foamCenterY + 3);
-    textEl.textContent = `ПЕНА: ${foamMl} МЛ`;
+    textEl.textContent = t('svgCupFoam', foamMl);
   } else {
     foamLabelGroup.setAttribute('opacity', '0');
   }
 
   // 6. РЕНДЕР ПОШАГОВОГО ПРОТОКОЛА
-  renderProtocolSteps(sizeObj, drinkObj, yieldMl, modifierMl, foamMl, recommendedClicks, grinder.unit);
+  renderProtocolSteps(sizeObj, drinkObj, yieldMl, modifierMl, foamMl, recommendedClicks, grinderUnit);
 }
 
 export function renderProtocolSteps(sizeObj, drinkObj, yieldMl, modifierMl, foamMl, clicks, unit) {
   const container = document.getElementById('protocol-steps-container');
-  const filterStepText = state.usePaperFilter
-    ? 'Смочите круглый <b>бумажный фильтр AeroPress</b> водой и приклейте его к верхнему металлическому ситу кофейника — это сделает чашку чище и выровняет поток.'
-    : 'Разровняйте кофе легким постукиванием по бортикам воронки. <b>Никогда не давите темпером или ложкой</b>, чтобы не задирать давление и температуру.';
+  const drinkName = localizeItem(drinkObj, 'name');
+  const filterStepText = state.usePaperFilter ? t('step2FilterOn') : t('step2FilterOff');
 
   const steps = [
     {
-      title: 'Вода комнатной температуры (~20°C)',
-      desc: `Налейте в нижнюю чашу <b>${state.waterMl} мл</b> чистой воды комнатной температуры (не кипяток!). По мере нагрева расширяющийся воздух и пар мягко увлажнят кофейную таблетку без перегрева выше 100°C.`
+      title: t('step1Title'),
+      desc: t('step1Desc', state.waterMl)
     },
     {
-      title: 'Помол и заполнение корзины до краев',
-      desc: `Смолите <b>${state.coffeeG.toFixed(1)} г</b> кофе на настройке <b>${clicks} ${unit}</b>. Засыпьте в корзину до краев без воздушной пустоты сверху. ${filterStepText}`
+      title: t('step2Title'),
+      desc: t('step2Desc', state.coffeeG.toFixed(1), clicks, unit, filterStepText)
     },
     {
-      title: 'Плавный нагрев и отсечка до «Стромболианского эффекта»',
-      desc: `Поставьте Моку на средний/умеренный нагрев. Как только кофе активно пойдет в верхнюю чашу (~<b>${yieldMl} мл</b> базы), <b>сильно убавьте или выключите конфорку</b>: остаточного давления внутри хватит, чтобы протолкнуть воду без вулканического фырканья и горечи.`
+      title: t('step3Title'),
+      desc: t('step3Desc', yieldMl)
     }
   ];
 
   if (drinkObj.modifierType === 'milk') {
     steps.push({
-      title: `Приготовление молочной части (${drinkObj.name})`,
-      desc: `Подогрейте и взбейте <b>${modifierMl} мл</b> молока (до 60–65°C) с образованием <b>~${foamMl} мл</b> шелковистой микропены, затем влейте в <b>${yieldMl} мл</b> готового кофейного концентрата.`
+      title: t('step4MilkTitle', drinkName),
+      desc: t('step4MilkDesc', modifierMl, foamMl, yieldMl)
     });
   } else if (drinkObj.modifierType === 'water') {
     steps.push({
-      title: 'Сборка Американо',
-      desc: `Налейте в чашку <b>${modifierMl} мл</b> горячей воды (88–92°C) и аккуратно влейте сверху <b>${yieldMl} мл</b> сваренной базы из Моки для сохранения крема.`
+      title: t('step4WaterTitle'),
+      desc: t('step4WaterDesc', modifierMl, yieldMl)
     });
   }
 

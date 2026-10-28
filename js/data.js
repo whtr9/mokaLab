@@ -3,8 +3,8 @@ export const DEFAULT_MOKA_SIZES = {
   2: {
     id: '2',
     cups: '2',
-    name: '2 чашки (Эталон)',
-    boilerMaxWaterMl: 80,
+    name: '2 чашки',
+    boilerMaxWaterMl: 100,
     defaultWaterMl: 70,
     defaultCoffeeG: 12.0,
     minCoffeeG: 9.0,
@@ -15,8 +15,8 @@ export const DEFAULT_MOKA_SIZES = {
   3: {
     id: '3',
     cups: '3',
-    name: '3 чашки (Эталон)',
-    boilerMaxWaterMl: 120,
+    name: '3 чашки',
+    boilerMaxWaterMl: 150,
     defaultWaterMl: 105,
     defaultCoffeeG: 17.0,
     minCoffeeG: 13.0,
@@ -115,10 +115,10 @@ export const DRINKS = {
   flatwhite: {
     id: 'flatwhite',
     name: 'Флэт Уайт',
-    shortDesc: 'Молоко 1:2.5 + тонкая пена',
+    shortDesc: 'Молоко 1:2 + тонкая пена',
     modifierType: 'milk',
-    modifierRatio: 2.5,
-    foamRatio: 0.35
+    modifierRatio: 2.0,
+    foamRatio: 0.25
   },
   cappuccino: {
     id: 'cappuccino',
@@ -139,9 +139,9 @@ export const DRINKS = {
   americano: {
     id: 'americano',
     name: 'Американо',
-    shortDesc: 'Горячая вода 1:2.2',
+    shortDesc: 'Горячая вода 1:2',
     modifierType: 'water',
-    modifierRatio: 2.2,
+    modifierRatio: 2.0,
     foamRatio: 0
   }
 };

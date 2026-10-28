@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mokalab-cache-v3';
+const CACHE_NAME = 'mokalab-cache-v3.1';
 
 // Обязательные локальные файлы модульного проекта
 const CORE_ASSETS = [

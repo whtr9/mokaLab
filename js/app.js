@@ -1,8 +1,20 @@
 import { MOKA_SIZES, saveCustomMokaToCatalog, deleteCustomMokaFromCatalog } from './data.js';
 import { state, resetState } from './state.js';
-import { renderDrinkSelector, renderMokaSizeButtons, syncSlidersToSize, updateUI } from './ui.js';
+import { applyStaticTranslations, renderDrinkSelector, renderMokaSizeButtons, syncSlidersToSize, updateUI } from './ui.js';
+import { currentLang, setLanguage, t } from './i18n.js';
 import * as storage from './storage.js';
 import { initPWA } from './pwa.js';
+
+function toggleLanguage() {
+  const nextLang = currentLang === 'ru' ? 'en' : 'ru';
+  setLanguage(nextLang);
+  applyStaticTranslations();
+  renderDrinkSelector();
+  renderMokaSizeButtons();
+  syncSlidersToSize(state.mokaSize);
+  updateUI();
+  storage.renderSavedPresetsBar();
+}
 
 function selectDrink(drinkId) {
   state.drinkId = drinkId;
@@ -43,11 +55,11 @@ function confirmAddCustomMoka() {
   const waterVal = parseInt(document.getElementById('custom-moka-water').value, 10);
 
   if (isNaN(coffeeVal) || coffeeVal < 4 || coffeeVal > 65) {
-    alert('Пожалуйста, укажите реальную вместимость воронки в граммах (от 4 до 65 г).');
+    alert(t('alertInvalidCoffee'));
     return;
   }
   if (isNaN(waterVal) || waterVal < 25 || waterVal > 550) {
-    alert('Пожалуйста, укажите реальный объем бойлера до клапана в миллилитрах (от 25 до 550 мл).');
+    alert(t('alertInvalidWater'));
     return;
   }
 
@@ -70,10 +82,10 @@ function toggleRatioLock() {
   state.lockedRatioValue = state.waterMl / state.coffeeG;
   const btn = document.getElementById('lock-ratio-btn');
   if (state.ratioLocked) {
-    btn.textContent = `🔒 Ratio 1:${state.lockedRatioValue.toFixed(1)}`;
+    btn.textContent = `${t('ratioLocked')} 1:${state.lockedRatioValue.toFixed(1)}`;
     btn.className = 'text-xs font-bold px-3 py-1 rounded-full bg-sky-600 text-white border border-sky-700 shadow-sm transition';
   } else {
-    btn.textContent = '🔓 Ratio свободно';
+    btn.textContent = t('ratioFree');
     btn.className = 'text-xs font-bold px-3 py-1 rounded-full bg-white/85 border border-sky-300 text-sky-800 shadow-sm hover:bg-sky-50 transition';
   }
 }
@@ -132,6 +144,7 @@ function togglePaperFilter(checked) {
 function resetToDefaultStandard() {
   resetState();
   document.getElementById('paper-filter-checkbox').checked = false;
+  applyStaticTranslations();
   renderDrinkSelector();
   renderMokaSizeButtons();
   syncSlidersToSize('2');
@@ -142,6 +155,7 @@ function init() {
   if (!MOKA_SIZES[state.mokaSize]) {
     state.mokaSize = '2';
   }
+  applyStaticTranslations();
   renderDrinkSelector();
   renderMokaSizeButtons();
   syncSlidersToSize(state.mokaSize);
@@ -150,8 +164,8 @@ function init() {
   initPWA();
 }
 
-// Привязка функций к глобальному объекту window для работы HTML-атрибутов onclick/oninput
 Object.assign(window, {
+  toggleLanguage,
   selectDrink,
   selectMokaSize,
   openCustomMokaModal,

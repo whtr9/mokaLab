@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mokalab-cache-v3.1';
+const CACHE_NAME = 'mokalab-cache-v3.2';
 
 // Обязательные локальные файлы модульного проекта
 const CORE_ASSETS = [
@@ -7,12 +7,14 @@ const CORE_ASSETS = [
   './manifest.json',
   './css/aero-theme.css',
   './js/app.js',
+  './js/i18n.js',
   './js/data.js',
   './js/state.js',
   './js/ui.js',
   './js/storage.js',
   './js/pwa.js'
 ];
+
 // Опциональные файлы (иконки и внешние библиотеки)
 const OPTIONAL_ASSETS = [
   './icon-192.png',

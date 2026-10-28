@@ -31,23 +31,26 @@
               Physics Edition v2.5
             </span>
           </div>
-          <p class="text-xs sm:text-sm text-[#4a6b82] font-medium">
+          <p data-i18n="appSubtitle" class="text-xs sm:text-sm text-[#4a6b82] font-medium">
             Лаборатория экстракции, термодинамики и пропорций гейзерной кофеварки
           </p>
         </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2.5">
-        <button id="pwa-install-btn" class="cta-btn cta-btn-green hidden">
+        <button id="lang-toggle-btn" onclick="toggleLanguage()" class="cta-btn font-mono-num">
+          🌐 EN
+        </button>
+        <button id="pwa-install-btn" data-i18n="installApp" class="cta-btn cta-btn-green hidden">
           Установить приложение
         </button>
-        <button onclick="resetToDefaultStandard()" class="cta-btn">
+        <button onclick="resetToDefaultStandard()" data-i18n="resetBtn" class="cta-btn">
           Сбросить к эталону
         </button>
-        <button onclick="openSavePresetModal()" class="cta-btn">
+        <button onclick="openSavePresetModal()" data-i18n="savePresetBtn" class="cta-btn">
           Сохранить рецепт
         </button>
-        <button onclick="openJsonModal()" class="cta-btn">
+        <button onclick="openJsonModal()" data-i18n="exportJsonBtn" class="cta-btn">
           Экспорт / JSON
         </button>
       </div>
@@ -60,26 +63,25 @@
   <!-- ОСНОВНАЯ СЕТКА -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-    <!-- ЛЕВАЯ КОЛОНКА (НАСТРОЙКИ И УПРАВЛЕНИЕ: 5 колонок) -->
+    <!-- ЛЕВАЯ КОЛОНКА (5 колонок) -->
     <div class="lg:col-span-5 space-y-6">
 
-      <!-- КАРТОЧКА 01: ВЫБОР НАПИТКА И ПРОФИЛЯ МОКИ -->
+      <!-- КАРТОЧКА 01: ВЫБОР НАПИТКА И КАЛИБРА МОКИ -->
       <section class="brutal-card">
         <div class="brutal-card-header">
           <div class="flex items-center gap-2.5">
             <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">01</span>
-            <h2 class="font-bold text-base text-[#0f2942]">Целевой напиток и профиль Моки</h2>
+            <h2 data-i18n="card01Title" class="font-bold text-base text-[#0f2942]">Целевой напиток и размер Моки</h2>
           </div>
-          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/80 text-sky-700 border border-sky-200">
-            Custom Calibration
+          <span data-i18n="card01Badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/80 text-sky-700 border border-sky-200">
+            Калибровка г / мл
           </span>
         </div>
 
         <div class="p-5 space-y-5">
-          <!-- Выбор напитка -->
           <div>
             <div class="flex justify-between items-center mb-2">
-              <label class="text-xs font-bold text-[#4a6b82]">Выберите кофейный напиток</label>
+              <label data-i18n="selectDrinkLabel" class="text-xs font-bold text-[#4a6b82]">Выберите кофейный напиток</label>
               <span id="selected-drink-badge" class="text-xs font-bold text-sky-700 bg-sky-100/80 px-2.5 py-0.5 rounded-full border border-sky-200">
                 Эспрессо (Мока)
               </span>
@@ -87,12 +89,11 @@
             <div id="drink-selector-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
           </div>
 
-          <!-- Выбор профиля гейзерной кофеварки -->
           <div>
             <div class="flex justify-between items-center mb-2">
-              <label class="text-xs font-bold text-[#4a6b82]">Профиль кофеварки (воронка / бойлер)</label>
+              <label data-i18n="selectMokaLabel" class="text-xs font-bold text-[#4a6b82]">Профиль гейзерной кофеварки</label>
               <span id="moka-capacity-badge" class="text-xs font-mono-num font-semibold text-amber-900 bg-amber-100/80 px-2.5 py-0.5 rounded-full border border-amber-300/80">
-                Воронка: 12 г | Клапан: 80 мл
+                Воронка: 12 г | Клапан: 100 мл
               </span>
             </div>
             <div id="moka-size-grid" class="grid grid-cols-3 gap-2.5"></div>
@@ -105,7 +106,7 @@
         <div class="brutal-card-header">
           <div class="flex items-center gap-2.5">
             <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">02</span>
-            <h2 class="font-bold text-base text-[#0f2942]">Дозировка, уровень воды и температура</h2>
+            <h2 data-i18n="card02Title" class="font-bold text-base text-[#0f2942]">Дозировка, уровень воды и температура</h2>
           </div>
           <button id="lock-ratio-btn" onclick="toggleRatioLock()"
                   class="text-xs font-bold px-3 py-1 rounded-full bg-white/85 border border-sky-300 text-sky-800 shadow-sm hover:bg-sky-50 transition">
@@ -114,99 +115,97 @@
         </div>
 
         <div class="p-5 space-y-5">
-          <!-- Ползунок Кофе (с контролем заполнения корзины без пустот) -->
+          <!-- Ползунок Кофе -->
           <div class="bg-white/60 border border-white/80 rounded-2xl p-4 shadow-sm space-y-2.5">
             <div class="flex justify-between items-center">
               <div>
-                <span class="text-sm font-bold text-[#0f2942]">Молотый кофе в корзине</span>
-                <p class="text-xs text-[#4a6b82]">Заполняйте до краев без темперовки</p>
+                <span data-i18n="coffeeTitle" class="text-sm font-bold text-[#0f2942]">Молотый кофе в корзине</span>
+                <p data-i18n="coffeeSub" class="text-xs text-[#4a6b82]">Заполняйте до краев без темперовки</p>
               </div>
               <div class="flex items-center gap-1.5">
-                <input id="coffee-input" type="number" step="0.5" min="4" max="65"
+                <input id="coffee-input" type="number" step="0.5" min="4" max="55"
                        class="terminal-input w-20 px-2.5 py-1 text-right font-mono-num font-bold text-sm"
                        oninput="handleManualCoffeeInput(this.value)" />
-                <span class="text-xs font-bold text-[#4a6b82]">г</span>
+                <span data-i18n="unitG" class="text-xs font-bold text-[#4a6b82]">г</span>
               </div>
             </div>
 
-            <input id="coffee-slider" type="range" min="4" max="65" step="0.5"
+            <input id="coffee-slider" type="range" min="4" max="55" step="0.5"
                    oninput="handleCoffeeSlider(this.value)" />
 
             <div class="flex justify-between items-center text-[11px] text-[#4a6b82] pt-1">
-              <span>Мин: <b id="coffee-min-label" class="font-mono-num">9 г</b></span>
+              <span><span data-i18n="minLabel">Мин:</span> <b id="coffee-min-label" class="font-mono-num">9 г</b></span>
               <span id="basket-fill-badge" class="px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-300">
-                Корзина заполнена на 100% (Без пустот)
+                Корзина заполнена (100% — Без пустот)
               </span>
-              <span>Макс: <b id="coffee-max-label" class="font-mono-num">15 г</b></span>
+              <span><span data-i18n="maxLabel">Макс:</span> <b id="coffee-max-label" class="font-mono-num">15 г</b></span>
             </div>
-            <p id="basket-headspace-hint" class="text-[11px] leading-relaxed text-[#4a6b82] pt-1 border-t border-sky-100">
-              Дозировка соответствует объему воронки: пустоты под верхним фильтром нет, вода пойдет равномерно без бульканья.
-            </p>
+            <p id="basket-headspace-hint" class="text-[11px] leading-relaxed text-[#4a6b82] pt-1 border-t border-sky-100"></p>
           </div>
 
-          <!-- Ползунок Воды (с термодинамическим контролем температуры) -->
+          <!-- Ползунок Воды -->
           <div class="bg-white/60 border border-white/80 rounded-2xl p-4 shadow-sm space-y-2.5">
             <div class="flex justify-between items-center">
               <div>
-                <span class="text-sm font-bold text-[#0f2942]">Вода в бойлере (~20°C)</span>
-                <p class="text-xs text-[#4a6b82]">Уровень воды регулирует температуру варки</p>
+                <span data-i18n="waterTitle" class="text-sm font-bold text-[#0f2942]">Вода в бойлере (~20°C)</span>
+                <p data-i18n="waterSub" class="text-xs text-[#4a6b82]">Уровень воды регулирует температуру варки</p>
               </div>
               <div class="flex items-center gap-1.5">
-                <input id="water-input" type="number" step="1" min="20" max="550"
+                <input id="water-input" type="number" step="1" min="20" max="450"
                        class="terminal-input w-20 px-2.5 py-1 text-right font-mono-num font-bold text-sm"
                        oninput="handleManualWaterInput(this.value)" />
-                <span class="text-xs font-bold text-[#4a6b82]">мл</span>
+                <span data-i18n="unitMl" class="text-xs font-bold text-[#4a6b82]">мл</span>
               </div>
             </div>
 
-            <input id="water-slider" type="range" min="20" max="550" step="1"
+            <input id="water-slider" type="range" min="20" max="450" step="1"
                    oninput="handleWaterSlider(this.value)" />
 
             <div class="flex justify-between items-center text-[11px] text-[#4a6b82] pt-1">
-              <span>Мин: <b id="water-min-label" class="font-mono-num">35 мл</b></span>
+              <span><span data-i18n="minLabel">Мин:</span> <b id="water-min-label" class="font-mono-num">35 мл</b></span>
               <span id="safety-badge" class="px-2.5 py-0.5 rounded-full font-bold bg-emerald-100/90 border border-emerald-400 text-emerald-800">
                 Ниже клапана (Норма)
               </span>
-              <span>Клапан: <b id="water-valve-label" class="font-mono-num">80 мл</b></span>
+              <span><span data-i18n="valveLimitLabel">Клапан:</span> <b id="water-valve-label" class="font-mono-num">100 мл</b></span>
             </div>
 
             <div class="mt-2 pt-2 border-t border-sky-100 flex items-center justify-between text-xs">
-              <span class="text-[#4a6b82] font-medium">Профиль температуры от уровня воды:</span>
+              <span data-i18n="tempProfileLabel" class="text-[#4a6b82] font-medium">Профиль температуры от уровня воды:</span>
               <span id="water-temp-profile-badge" class="font-mono-num font-bold text-sky-800 bg-sky-100/80 px-2.5 py-0.5 rounded-full border border-sky-200">
-                Сбалансированный (~93–96°C)
+                Сбалансированный (~92–95°C)
               </span>
             </div>
-            <p id="water-temp-hint" class="text-[11px] text-[#4a6b82] leading-relaxed">
+            <p data-i18n="waterTempHint" id="water-temp-hint" class="text-[11px] text-[#4a6b82] leading-relaxed">
               Чем выше уровень воды (до клапана), тем выше начальная и конечная температура. Если кофе горчит в конце — убавьте воду на 5–10 мл.
             </p>
           </div>
 
-          <!-- Сводная плашка коэффициента и выхода -->
+          <!-- Сводная плашка -->
           <div class="grid grid-cols-3 gap-2.5 text-center">
             <div class="bg-white/65 border border-white/85 rounded-xl p-2.5 shadow-sm">
-              <div class="text-[11px] font-semibold text-[#4a6b82]">Коэффициент</div>
+              <div data-i18n="summaryRatioLabel" class="text-[11px] font-semibold text-[#4a6b82]">Коэффициент</div>
               <div id="summary-ratio" class="text-base font-mono-num font-bold text-sky-700 mt-0.5">1 : 5.8</div>
             </div>
             <div class="bg-white/65 border border-white/85 rounded-xl p-2.5 shadow-sm">
-              <div class="text-[11px] font-semibold text-[#4a6b82]">Выход базы</div>
+              <div data-i18n="summaryYieldLabel" class="text-[11px] font-semibold text-[#4a6b82]">Выход базы</div>
               <div id="summary-yield" class="text-base font-mono-num font-bold text-amber-800 mt-0.5">47 мл</div>
             </div>
             <div class="bg-white/65 border border-white/85 rounded-xl p-2.5 shadow-sm">
-              <div class="text-[11px] font-semibold text-[#4a6b82]">Итого в чашке</div>
+              <div data-i18n="summaryTotalLabel" class="text-[11px] font-semibold text-[#4a6b82]">Итого в чашке</div>
               <div id="summary-total-drink" class="text-base font-mono-num font-bold text-emerald-700 mt-0.5">47 мл</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- КАРТОЧКА 03: КОФЕМОЛКА, ДАВЛЕНИЕ И АЭРОПРЕСС-ФИЛЬТР -->
+      <!-- КАРТОЧКА 03: КОФЕМОЛКА, ДАВЛЕНИЕ И ФИЛЬТР -->
       <section class="brutal-card">
         <div class="brutal-card-header">
           <div class="flex items-center gap-2.5">
             <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">03</span>
-            <h2 class="font-bold text-base text-[#0f2942]">Помол, сопротивление и фильтр</h2>
+            <h2 data-i18n="card03Title" class="font-bold text-base text-[#0f2942]">Помол, сопротивление и фильтр</h2>
           </div>
-          <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/80 text-amber-800 border border-amber-200">
+          <span data-i18n="card03Badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-white/80 text-amber-800 border border-amber-200">
             Контроль давления
           </span>
         </div>
@@ -214,7 +213,7 @@
         <div class="p-5 space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-[#4a6b82] mb-1.5">Модель кофемолки</label>
+              <label data-i18n="grinderModelLabel" class="block text-xs font-bold text-[#4a6b82] mb-1.5">Модель кофемолки</label>
               <select id="grinder-select" onchange="handleGrinderChange(this.value)"
                       class="terminal-input w-full px-3 py-2 text-xs font-semibold">
                 <option value="timemore_c3">Timemore C3 / C3S Pro (S2C)</option>
@@ -226,12 +225,12 @@
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-[#4a6b82] mb-1.5">Обжарка и состав зерна</label>
+              <label data-i18n="roastLabel" class="block text-xs font-bold text-[#4a6b82] mb-1.5">Обжарка и состав зерна</label>
               <select id="roast-select" onchange="handleRoastChange(this.value)"
                       class="terminal-input w-full px-3 py-2 text-xs font-semibold">
-                <option value="medium_blend">Средняя / Бленд 80/20 (Классика)</option>
-                <option value="light_arabica">Светлая / 100% Арабика (Фрукты)</option>
-                <option value="dark_italian">Темная итальянская обжарка</option>
+                <option value="medium_blend" data-i18n="roastMedium">Средняя / Бленд 80/20 (Классика)</option>
+                <option value="light_arabica" data-i18n="roastLight">Светлая / 100% Арабика (Фрукты)</option>
+                <option value="dark_italian" data-i18n="roastDark">Темная итальянская обжарка</option>
               </select>
             </div>
           </div>
@@ -242,20 +241,20 @@
                    class="mt-1 w-4 h-4 accent-sky-600 rounded cursor-pointer" />
             <div class="text-xs">
               <div class="font-bold text-[#0f2942] flex items-center gap-2">
-                <span>Использовать бумажный фильтр (AeroPress) поверх корзины</span>
-                <span class="px-2 py-0.5 text-[10px] rounded-full bg-sky-100 text-sky-800 font-semibold border border-sky-200">Опционально</span>
+                <span data-i18n="paperFilterTitle">Использовать бумажный фильтр (AeroPress) поверх корзины</span>
+                <span data-i18n="optionalBadge" class="px-2 py-0.5 text-[10px] rounded-full bg-sky-100 text-sky-800 font-semibold border border-sky-200">Опционально</span>
               </div>
-              <p class="text-[#4a6b82] mt-0.5 leading-relaxed">
+              <p data-i18n-html="paperFilterDesc" class="text-[#4a6b82] mt-0.5 leading-relaxed">
                 Делает чашку чище, повышает равномерность экстракции и создает дополнительное сопротивление (позволяет сделать помол на <b>+1 щелчок крупнее</b> без потери давления).
               </p>
             </div>
           </label>
 
-          <!-- Вывод рекомендуемых кликов и физики помола -->
+          <!-- Вывод рекомендуемых кликов -->
           <div class="bg-white/65 border border-white/85 rounded-2xl p-4 shadow-sm space-y-2">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-xs font-bold text-[#4a6b82]">Рекомендация для выбранной конфигурации</div>
+                <div data-i18n="grinderRecLabel" class="text-xs font-bold text-[#4a6b82]">Рекомендация для выбранной конфигурации</div>
                 <div id="grinder-clicks-Main" class="text-lg font-mono-num font-extrabold text-sky-800 mt-0.5">
                   15 щелчков (диапазон 14–16)
                 </div>
@@ -264,7 +263,7 @@
                 ~380–450 мкм
               </div>
             </div>
-            <p class="text-[11px] text-[#4a6b82] leading-relaxed pt-1 border-t border-sky-100">
+            <p data-i18n-html="grindPhysicsHint" class="text-[11px] text-[#4a6b82] leading-relaxed pt-1 border-t border-sky-100">
               <b>Физика помола:</b> чем мельче помол, тем сильнее «закрыта» система — растут давление и температура воды. Чем крупнее помол, тем прохладнее экстракция, но при слишком крупном помоле таблетка потеряет герметичность и сквозь кофе прорвется кипяток.
             </p>
           </div>
@@ -272,34 +271,33 @@
       </section>
     </div>
 
-    <!-- ПРАВАЯ КОЛОНКА (ТЕХНИЧЕСКИЙ РАЗРЕЗ И ПРОТОКОЛ: 7 колонок) -->
+    <!-- ПРАВАЯ КОЛОНКА (7 колонок) -->
     <div class="lg:col-span-7 space-y-6">
 
-      <!-- КАРТОЧКА 04: ИНТЕРАКТИВНЫЙ ТЕХНИЧЕСКИЙ РАЗРЕЗ (БЕЗ ЗАМЕРОВ ВЫСОТ И ШИРИНЫ) -->
+      <!-- КАРТОЧКА 04: ИНТЕРАКТИВНЫЙ ТЕХНИЧЕСКИЙ РАЗРЕЗ -->
       <section class="brutal-card">
         <div class="brutal-card-header">
           <div class="flex items-center gap-2.5">
             <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">04</span>
-            <h2 class="font-bold text-base text-[#0f2942]">Технический разрез: Мока и Чашка</h2>
+            <h2 data-i18n="card04Title" class="font-bold text-base text-[#0f2942]">Технический разрез: Мока и Чашка</h2>
           </div>
           <span id="active-preset-pill" class="text-xs font-bold px-3 py-0.5 rounded-full bg-emerald-100/90 text-emerald-800 border border-emerald-300">
-            2 чашки (Эталон): 12 г / 70 мл
+            2 чашки: 12 г / 70 мл
           </span>
         </div>
 
         <div class="p-5">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
 
-            <!-- ЧЕРТЕЖ А: ГЕЙЗЕРНАЯ КОФЕВАРКА В РАЗРЕЗЕ -->
+            <!-- ЧЕРТЕЖ А: ГЕЙЗЕРНАЯ КОФЕВАРКА В РАЗРЕЗЕ (БЕЗ САНТИМЕТРОВ) -->
             <div class="bg-white/55 border border-white/85 rounded-2xl p-4 shadow-sm flex flex-col items-center">
               <div class="w-full flex justify-between items-center mb-2 text-xs font-bold text-[#0f2942]">
-                <span>А. Разрез Мока-пота</span>
-                <span id="svg-moka-title-badge" class="text-sky-700 font-mono-num">12 г / 80 мл</span>
+                <span data-i18n="svgMokaHeader">А. Разрез Мока-пота</span>
+                <span id="svg-moka-title-badge" class="text-sky-700 font-mono-num">2 чашки (12 г / 100 мл)</span>
               </div>
 
               <svg viewBox="0 0 280 350" class="w-full max-w-[270px] h-auto select-none">
                 <defs>
-                  <!-- Металлический корпус полированного алюминия -->
                   <linearGradient id="silverMetal" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stop-color="#d7dde2" />
                     <stop offset="22%" stop-color="#f8fafc" />
@@ -307,20 +305,14 @@
                     <stop offset="78%" stop-color="#e2e8f0" />
                     <stop offset="100%" stop-color="#7b8794" />
                   </linearGradient>
-
-                  <!-- Градиент натурального эспрессо -->
                   <linearGradient id="realCoffeeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stop-color="#4e2a14" />
                     <stop offset="100%" stop-color="#261206" />
                   </linearGradient>
-
-                  <!-- Кристально-чистая голубая вода Frutiger Aero -->
                   <linearGradient id="aeroWaterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stop-color="rgba(56, 189, 248, 0.45)" />
                     <stop offset="100%" stop-color="rgba(2, 132, 199, 0.78)" />
                   </linearGradient>
-
-                  <!-- Клип-маски камер -->
                   <clipPath id="boilerClip">
                     <polygon points="75,210 205,210 222,325 58,325" />
                   </clipPath>
@@ -330,57 +322,42 @@
                   <clipPath id="basketClip">
                     <polygon points="96,184 184,184 172,238 108,238" />
                   </clipPath>
-
-                  <!-- Текстура молотого кофе -->
                   <pattern id="groundsHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                     <rect width="6" height="6" fill="#4a2c18" />
                     <line x1="0" y1="0" x2="0" y2="6" stroke="#2e190c" stroke-width="2.5" />
                   </pattern>
                 </defs>
 
-                <!-- Крышка и бакелитовая пипка -->
+                <!-- Крышка и ручка -->
                 <polygon points="128,20 152,20 146,38 134,38" fill="#1e293b" stroke="#0f172a" stroke-width="1.5" />
                 <polygon points="62,60 140,38 218,60" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
-
-                <!-- Ручка из черного глянцевого бакелита -->
                 <path d="M 205,72 L 245,72 L 245,162 L 228,162 L 228,90 L 198,90" fill="#1e293b" stroke="#0f172a" stroke-width="1.5" stroke-linejoin="round" />
 
-                <!-- ВЕРХНЯЯ ЧАША (КОЛЛЕКТОР) -->
+                <!-- ВЕРХНЯЯ ЧАША -->
                 <polygon points="65,60 215,60 196,182 84,182" fill="url(#silverMetal)" fill-opacity="0.35" stroke="#64748b" stroke-width="2" />
-
-                <!-- Наполняющийся готовый кофе в верхней чаше -->
                 <g clip-path="url(#upperChamberClip)">
                   <rect id="svg-upper-coffee" class="svg-transition" x="60" y="135" width="160" height="47" fill="url(#realCoffeeGrad)" fill-opacity="0.92" />
                   <rect id="svg-upper-crema" class="svg-transition" x="60" y="131" width="160" height="4" fill="#d49b54" />
                 </g>
 
-                <!-- Центральная колонка (гейзер) -->
                 <polygon points="131,86 149,86 155,182 125,182" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
-                <!-- Капли экстракции -->
                 <path id="svg-fountain-left" d="M 135,86 Q 115,68 102,105" fill="none" stroke="#8c4a27" stroke-width="2" stroke-dasharray="3 3" />
                 <path id="svg-fountain-right" d="M 145,86 Q 165,68 178,105" fill="none" stroke="#8c4a27" stroke-width="2" stroke-dasharray="3 3" />
-
-                <!-- Соединительное кольцо (резьба) -->
                 <rect x="80" y="180" width="120" height="14" rx="2" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
 
-                <!-- НИЖНЯЯ ЧАША (БОЙЛЕР) -->
+                <!-- НИЖНЯЯ ЧАША -->
                 <polygon points="73,194 207,194 225,328 55,328" fill="url(#silverMetal)" fill-opacity="0.3" stroke="#64748b" stroke-width="2" />
-
-                <!-- Динамическая вода в нижней чаше -->
                 <g clip-path="url(#boilerClip)">
                   <rect id="svg-boiler-water" class="svg-transition" x="50" y="242" width="180" height="86" fill="url(#aeroWaterGrad)" />
                   <line id="svg-water-surface" class="svg-transition" x1="55" y1="242" x2="225" y2="242" stroke="#0284c7" stroke-width="2" />
                 </g>
 
-                <!-- ВОРОНКА-ФИЛЬТР И КОРЗИНА КОФЕ -->
+                <!-- ВОРОНКА И КОРЗИНА КОФЕ -->
                 <rect x="135" y="238" width="10" height="80" fill="url(#silverMetal)" stroke="#64748b" stroke-width="1.5" />
                 <polygon points="94,184 186,184 173,238 107,238" fill="url(#silverMetal)" fill-opacity="0.45" stroke="#64748b" stroke-width="1.5" />
-
-                <!-- Опциональный бумажный фильтр AeroPress поверх корзины -->
                 <rect id="svg-paper-filter" x="94" y="180.5" width="92" height="3.5" rx="1.5"
                       fill="#ffffff" stroke="#0284c7" stroke-width="1.2" class="hidden" />
 
-                <!-- Динамический уровень молотого кофе + предупреждение о пустоте -->
                 <g clip-path="url(#basketClip)">
                   <rect id="svg-headspace-void" class="svg-transition" x="95" y="184" width="90" height="0"
                         fill="rgba(245, 158, 11, 0.32)" stroke="#d97706" stroke-width="1" stroke-dasharray="2,2" />
@@ -388,39 +365,36 @@
                   <rect id="svg-coffee-grounds" class="svg-transition" x="90" y="190" width="100" height="48" fill="url(#groundsHatch)" />
                 </g>
 
-                <!-- КЛАПАН БЕЗОПАСНОСТИ (ЛАТУННЫЙ) -->
+                <!-- КЛАПАН БЕЗОПАСНОСТИ -->
                 <g id="svg-valve-group">
                   <polygon points="73,222 63,217 63,227" fill="#eab308" stroke="#a16207" stroke-width="1" />
                   <circle id="svg-valve-icon" cx="69" cy="222" r="3.5" fill="#eab308" stroke="#713f12" stroke-width="1" />
                   <line x1="65" y1="229" x2="215" y2="229" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3" />
-                  <text x="212" y="225" text-anchor="end" fill="#dc2626" font-size="8" font-weight="700" class="font-mono-num">MAX КЛАПАН</text>
+                  <text data-i18n="svgMaxValve" x="212" y="225" text-anchor="end" fill="#dc2626" font-size="8" font-weight="700" class="font-mono-num">MAX КЛАПАН</text>
                 </g>
 
-                <!-- Выноски с цифрами прямо на чертеже -->
+                <!-- Выноски с цифрами -->
                 <g>
                   <rect x="86" y="146" width="108" height="18" rx="6" fill="rgba(255,255,255,0.9)" stroke="#cbd5e1" stroke-width="1" />
                   <text id="svg-yield-label" x="140" y="158" text-anchor="middle" fill="#4e2a14" font-size="9" font-weight="700" class="font-mono-num">БАЗА: ~47 МЛ</text>
                 </g>
-
                 <g>
-                  <rect x="100" y="205" width="80" height="17" rx="6" fill="rgba(255,255,255,0.92)" stroke="#d97706" stroke-width="1" />
+                  <rect x="96" y="205" width="88" height="17" rx="6" fill="rgba(255,255,255,0.92)" stroke="#d97706" stroke-width="1" />
                   <text id="svg-coffee-label" x="140" y="216" text-anchor="middle" fill="#4a2c18" font-size="9" font-weight="700" class="font-mono-num">12.0 Г КОФЕ</text>
                 </g>
-
                 <g>
                   <rect x="88" y="280" width="104" height="19" rx="6" fill="rgba(255,255,255,0.9)" stroke="#38bdf8" stroke-width="1" />
                   <text id="svg-water-label" x="140" y="293" text-anchor="middle" fill="#0369a1" font-size="9.5" font-weight="700" class="font-mono-num">70 МЛ (~20°C)</text>
                 </g>
 
-                <!-- Спираль нагрева внизу -->
-                <line x1="78" y1="336" x2="202" y2="336" stroke="#f97316" stroke-width="2.5" stroke-dasharray="8 5" stroke-linecap="round" />
+                <line x1="78" y1="334" x2="202" y2="334" stroke="#f97316" stroke-width="2.5" stroke-dasharray="8 5" stroke-linecap="round" />
               </svg>
             </div>
 
-            <!-- ЧЕРТЕЖ Б: ИТОГОВАЯ ЧАШКА НАПИТКА -->
+            <!-- ЧЕРТЕЖ Б: ИТОГОВОЙ ЧАШКИ -->
             <div class="bg-white/55 border border-white/85 rounded-2xl p-4 shadow-sm flex flex-col items-center">
               <div class="w-full flex justify-between items-center mb-2 text-xs font-bold text-[#0f2942]">
-                <span>Б. Слои в чашке</span>
+                <span data-i18n="svgCupHeader">Б. Слои в чашке</span>
                 <span id="svg-cup-title-badge" class="text-amber-800 font-mono-num">Эспрессо (Мока)</span>
               </div>
 
@@ -434,170 +408,14 @@
                   </pattern>
                 </defs>
 
-                <!-- Ручка чашки -->
                 <path d="M 186,115 L 222,115 C 232,115 235,125 235,155 C 235,185 232,195 222,195 L 180,195" fill="none" stroke="#94a3b8" stroke-width="10" stroke-linejoin="round" />
                 <path d="M 186,115 L 222,115 C 232,115 235,125 235,155 C 235,185 232,195 222,195 L 180,195" fill="none" stroke="#f8fafc" stroke-width="4" stroke-linejoin="round" />
-
-                <!-- Блюдце -->
                 <rect x="28" y="312" width="184" height="8" rx="4" fill="url(#silverMetal)" stroke="#94a3b8" stroke-width="1.5" />
 
-                <!-- Внутренние слои напитка -->
                 <g clip-path="url(#cupInteriorClip)">
                   <rect x="40" y="70" width="160" height="245" fill="rgba(255, 255, 255, 0.55)" />
                   <rect id="cup-layer-foam" class="svg-transition" x="40" y="220" width="160" height="0" fill="#ffffff" fill-opacity="0.96" />
                   <rect id="cup-layer-modifier-bg" class="svg-transition" x="40" y="220" width="160" height="0" fill="#fffdf7" fill-opacity="0.9" />
                   <rect id="cup-layer-modifier" class="svg-transition" x="40" y="220" width="160" height="0" fill="url(#milkDots)" />
                   <rect id="cup-layer-coffee" class="svg-transition" x="40" y="220" width="160" height="90" fill="url(#realCoffeeGrad)" fill-opacity="0.92" />
-                  <rect id="cup-layer-crema" class="svg-transition" x="40" y="216" width="160" height="4" fill="#d49b54" />
-                </g>
-
-                <!-- Стеклянный контур чашки -->
-                <path d="M 48,75 L 192,75 L 176,275 C 172,298 158,308 120,308 C 82,308 68,298 64,275 Z"
-                      fill="none" stroke="#94a3b8" stroke-width="3" />
-
-                <!-- Динамические подписи слоев в чашке -->
-                <g id="cup-label-foam-group" class="svg-transition" opacity="0">
-                  <rect x="65" y="102" width="110" height="18" rx="6" fill="rgba(255,255,255,0.92)" stroke="#cbd5e1" stroke-width="1" />
-                  <text id="cup-label-foam" x="120" y="114" text-anchor="middle" fill="#0f2942" font-size="8.5" font-weight="700" class="font-mono-num">ПЕНА: 20 МЛ</text>
-                </g>
-
-                <g id="cup-label-mod-group" class="svg-transition" opacity="0">
-                  <rect x="58" y="160" width="124" height="20" rx="6" fill="rgba(255,255,255,0.92)" stroke="#38bdf8" stroke-width="1" />
-                  <text id="cup-label-mod" x="120" y="173" text-anchor="middle" fill="#0369a1" font-size="9" font-weight="700" class="font-mono-num">МОЛОКО: 110 МЛ</text>
-                </g>
-
-                <g id="cup-label-coffee-group" class="svg-transition">
-                  <rect x="62" y="255" width="116" height="20" rx="6" fill="rgba(255,255,255,0.92)" stroke="#d97706" stroke-width="1" />
-                  <text id="cup-label-coffee" x="120" y="268" text-anchor="middle" fill="#4e2a14" font-size="9" font-weight="700" class="font-mono-num">КОФЕ-БАЗА: 47 МЛ</text>
-                </g>
-
-                <!-- Верхняя плашка общего объема -->
-                <rect x="55" y="34" width="130" height="22" rx="8" fill="rgba(255,255,255,0.92)" stroke="#0288d1" stroke-width="1.5" />
-                <text id="cup-total-top" x="120" y="48" text-anchor="middle" fill="#0288d1" font-size="9.5" font-weight="700" class="font-mono-num">В ЧАШКЕ: ~47 МЛ</text>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- КАРТОЧКА 05: ПОШАГОВЫЙ ПРОТОКОЛ ПРИГОТОВЛЕНИЯ -->
-      <section class="brutal-card">
-        <div class="brutal-card-header">
-          <div class="flex items-center gap-2.5">
-            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">05</span>
-            <h2 class="font-bold text-base text-[#0f2942]">Пошаговый протокол заваривания</h2>
-          </div>
-          <span id="protocol-drink-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/85 text-sky-800 border border-sky-200">
-            Эспрессо (Мока)
-          </span>
-        </div>
-
-        <div class="p-5">
-          <div id="protocol-steps-container" class="space-y-2.5"></div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <!-- МОДАЛЬНОЕ ОКНО КАЛИБРОВКИ СВОЕЙ КОФЕВАРКИ -->
-  <div id="custom-moka-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="brutal-card max-w-md w-full overflow-hidden">
-      <div class="brutal-card-header">
-        <h3 class="font-bold text-base text-[#0f2942]">Калибровка своей кофеварки</h3>
-        <button onclick="closeCustomMokaModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
-      </div>
-      <div class="p-5 space-y-4">
-        <p class="text-xs text-[#4a6b82] leading-relaxed">
-          Измерьте вашу кофеварку на кухонных весах один раз — калькулятор автоматически рассчитает термодинамику и безопасные границы.
-        </p>
-
-        <div>
-          <label class="block text-xs font-bold text-[#0f2942] mb-1">Название кофеварки</label>
-          <input id="custom-moka-name" type="text" placeholder="Например: Bialetti Musa 4-cup"
-                 class="terminal-input w-full px-3 py-2 text-sm font-semibold" />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-[#0f2942] mb-1">Вместимость воронки (г)</label>
-            <input id="custom-moka-coffee" type="number" step="0.5" min="5" max="60" placeholder="15.0"
-                   class="terminal-input w-full px-3 py-2 text-sm font-mono-num font-bold" />
-            <span class="text-[10px] text-[#4a6b82] block mt-1">До краев без горки и трамбовки</span>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-[#0f2942] mb-1">Вода до клапана (мл)</label>
-            <input id="custom-moka-water" type="number" step="1" min="30" max="500" placeholder="130"
-                   class="terminal-input w-full px-3 py-2 text-sm font-mono-num font-bold" />
-            <span class="text-[10px] text-[#4a6b82] block mt-1">Ровно до нижнего края клапана</span>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2">
-          <button onclick="closeCustomMokaModal()" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
-            Отмена
-          </button>
-          <button onclick="confirmAddCustomMoka()" class="cta-btn cta-btn-green">
-            Добавить кофеварку
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- МОДАЛЬНОЕ ОКНО СОХРАНЕНИЯ РЕЦЕПТА -->
-  <div id="save-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="brutal-card max-w-md w-full overflow-hidden">
-      <div class="brutal-card-header">
-        <h3 class="font-bold text-base text-[#0f2942]">Сохранить собственный рецепт</h3>
-        <button onclick="closeSavePresetModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
-      </div>
-      <div class="p-5 space-y-4">
-        <div>
-          <label class="block text-xs font-bold text-[#4a6b82] mb-1">Название рецепта</label>
-          <input id="preset-name-input" type="text" placeholder="Например: Утренний Флэт 2-cup (Без горечи)"
-                 class="terminal-input w-full px-3 py-2 text-sm font-semibold" />
-        </div>
-        <div class="flex justify-end gap-2">
-          <button onclick="closeSavePresetModal()" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
-            Отмена
-          </button>
-          <button onclick="confirmSavePreset()" class="cta-btn cta-btn-green">
-            Сохранить в браузере
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- МОДАЛЬНОЕ ОКНО ЭКСПОРТА / ИМПОРТА JSON -->
-  <div id="json-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="brutal-card max-w-lg w-full overflow-hidden">
-      <div class="brutal-card-header">
-        <h3 class="font-bold text-base text-[#0f2942]">Экспорт и импорт конфигурации (JSON)</h3>
-        <button onclick="closeJsonModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
-      </div>
-      <div class="p-5 space-y-4">
-        <textarea id="json-textarea" rows="7"
-                  class="terminal-input w-full p-3 font-mono-num text-xs"></textarea>
-        <div class="flex justify-between items-center">
-          <button onclick="copyJsonToClipboard()" class="cta-btn">
-            Скопировать JSON
-          </button>
-          <div class="flex gap-2">
-            <button onclick="importJsonConfig()" class="cta-btn cta-btn-green">
-              Применить JSON
-            </button>
-            <button onclick="closeJsonModal()" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
-              Закрыть
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script type="module" src="./js/app.js"></script>
-</body>
-</html>
+                  <rect id="cup-layer-crema" class="svg-transition" x="40" y="216" width="160" height="4

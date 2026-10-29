@@ -418,4 +418,142 @@
                   <rect id="cup-layer-modifier-bg" class="svg-transition" x="40" y="220" width="160" height="0" fill="#fffdf7" fill-opacity="0.9" />
                   <rect id="cup-layer-modifier" class="svg-transition" x="40" y="220" width="160" height="0" fill="url(#milkDots)" />
                   <rect id="cup-layer-coffee" class="svg-transition" x="40" y="220" width="160" height="90" fill="url(#realCoffeeGrad)" fill-opacity="0.92" />
-                  <rect id="cup-layer-crema" class="svg-transition" x="40" y="216" width="160" height="4
+                  <rect id="cup-layer-crema" class="svg-transition" x="40" y="216" width="160" height="4" fill="#d49b54" />
+                </g>
+
+                <path d="M 48,75 L 192,75 L 176,275 C 172,298 158,308 120,308 C 82,308 68,298 64,275 Z"
+                      fill="none" stroke="#94a3b8" stroke-width="3" />
+
+                <g id="cup-label-foam-group" class="svg-transition" opacity="0">
+                  <rect x="65" y="102" width="110" height="18" rx="6" fill="rgba(255,255,255,0.92)" stroke="#cbd5e1" stroke-width="1" />
+                  <text id="cup-label-foam" x="120" y="114" text-anchor="middle" fill="#0f2942" font-size="8.5" font-weight="700" class="font-mono-num">ПЕНА: 20 МЛ</text>
+                </g>
+                <g id="cup-label-mod-group" class="svg-transition" opacity="0">
+                  <rect x="55" y="160" width="130" height="20" rx="6" fill="rgba(255,255,255,0.92)" stroke="#38bdf8" stroke-width="1" />
+                  <text id="cup-label-mod" x="120" y="173" text-anchor="middle" fill="#0369a1" font-size="9" font-weight="700" class="font-mono-num">МОЛОКО: 94 МЛ</text>
+                </g>
+                <g id="cup-label-coffee-group" class="svg-transition">
+                  <rect x="58" y="255" width="124" height="20" rx="6" fill="rgba(255,255,255,0.92)" stroke="#d97706" stroke-width="1" />
+                  <text id="cup-label-coffee" x="120" y="268" text-anchor="middle" fill="#4e2a14" font-size="9" font-weight="700" class="font-mono-num">КОФЕ-БАЗА: 47 МЛ</text>
+                </g>
+
+                <rect x="55" y="34" width="130" height="22" rx="8" fill="rgba(255,255,255,0.92)" stroke="#0288d1" stroke-width="1.5" />
+                <text id="cup-total-top" x="120" y="48" text-anchor="middle" fill="#0288d1" font-size="9.5" font-weight="700" class="font-mono-num">В ЧАШКЕ: ~47 МЛ</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- КАРТОЧКА 05: ПОШАГОВЫЙ ПРОТОКОЛ ПРИГОТОВЛЕНИЯ -->
+      <section class="brutal-card">
+        <div class="brutal-card-header">
+          <div class="flex items-center gap-2.5">
+            <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center shadow-sm">05</span>
+            <h2 data-i18n="card05Title" class="font-bold text-base text-[#0f2942]">Пошаговый протокол заваривания</h2>
+          </div>
+          <span id="protocol-drink-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/85 text-sky-800 border border-sky-200">
+            Эспрессо (Мока)
+          </span>
+        </div>
+
+        <div class="p-5">
+          <div id="protocol-steps-container" class="space-y-2.5"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- МОДАЛЬНОЕ ОКНО КАЛИБРОВКИ СВОЕЙ КОФЕВАРКИ -->
+  <div id="custom-moka-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="brutal-card max-w-md w-full overflow-hidden">
+      <div class="brutal-card-header">
+        <h3 data-i18n="customMokaModalTitle" class="font-bold text-base text-[#0f2942]">Калибровка своей кофеварки</h3>
+        <button onclick="closeCustomMokaModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label data-i18n="customMokaNameLabel" class="block text-xs font-bold text-[#4a6b82] mb-1">Название кофеварки</label>
+          <input id="custom-moka-name" type="text" data-i18n-placeholder="customMokaNamePlaceholder" placeholder="Например: Bialetti Venus 4 чашки"
+                 class="terminal-input w-full px-3 py-2 text-sm font-semibold" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label data-i18n="customMokaCoffeeLabel" class="block text-xs font-bold text-[#4a6b82] mb-1">Вместимость воронки до краев (г)</label>
+            <input id="custom-moka-coffee" type="number" step="0.5" min="4" max="65" placeholder="18.0"
+                   class="terminal-input w-full px-3 py-2 text-sm font-mono-num font-bold" />
+          </div>
+          <div>
+            <label data-i18n="customMokaWaterLabel" class="block text-xs font-bold text-[#4a6b82] mb-1">Объем бойлера до клапана (мл)</label>
+            <input id="custom-moka-water" type="number" step="5" min="25" max="550" placeholder="160"
+                   class="terminal-input w-full px-3 py-2 text-sm font-mono-num font-bold" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button onclick="closeCustomMokaModal()" data-i18n="cancelBtn" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
+            Отмена
+          </button>
+          <button onclick="confirmAddCustomMoka()" data-i18n="addMokaBtn" class="cta-btn cta-btn-green">
+            Добавить кофеварку
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО СОХРАНЕНИЯ РЕЦЕПТА -->
+  <div id="save-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="brutal-card max-w-md w-full overflow-hidden">
+      <div class="brutal-card-header">
+        <h3 data-i18n="saveModalTitle" class="font-bold text-base text-[#0f2942]">Сохранить собственный рецепт</h3>
+        <button onclick="closeSavePresetModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label data-i18n="presetNameLabel" class="block text-xs font-bold text-[#4a6b82] mb-1">Название рецепта</label>
+          <input id="preset-name-input" type="text" data-i18n-placeholder="presetNamePlaceholder" placeholder="Например: Утренний Флэт 2-cup (Без горечи)"
+                 class="terminal-input w-full px-3 py-2 text-sm font-semibold" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="closeSavePresetModal()" data-i18n="cancelBtn" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
+            Отмена
+          </button>
+          <button onclick="confirmSavePreset()" data-i18n="saveBrowserBtn" class="cta-btn cta-btn-green">
+            Сохранить в браузере
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО ЭКСПОРТА / ИМПОРТА JSON -->
+  <div id="json-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="brutal-card max-w-lg w-full overflow-hidden">
+      <div class="brutal-card-header">
+        <h3 data-i18n="jsonModalTitle" class="font-bold text-base text-[#0f2942]">Экспорт и импорт конфигурации (JSON)</h3>
+        <button onclick="closeJsonModal()" class="text-sm font-bold text-[#4a6b82] hover:text-[#0f2942]">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <textarea id="json-textarea" rows="7"
+                  class="terminal-input w-full p-3 font-mono-num text-xs"></textarea>
+        <div class="flex justify-between items-center">
+          <button onclick="copyJsonToClipboard()" data-i18n="copyJsonBtn" class="cta-btn">
+            Скопировать JSON
+          </button>
+          <div class="flex gap-2">
+            <button onclick="importJsonConfig()" data-i18n="applyJsonBtn" class="cta-btn cta-btn-green">
+              Применить JSON
+            </button>
+            <button onclick="closeJsonModal()" data-i18n="closeBtn" class="px-4 py-2 rounded-full text-xs font-bold bg-white/80 text-[#4a6b82] border border-slate-300">
+              Закрыть
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>

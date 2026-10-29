@@ -268,4 +268,5 @@ export function localizeItem(item, field = 'name') {
   if (currentLang === 'en' && item[`${field}_en`]) {
     return item[`${field}_en`];
   }
-  return item[field] ||
+  return item[field] || '';
+}
